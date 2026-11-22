@@ -105,32 +105,55 @@ function buildBody(system: string, user: string, opts: GeminiOptions, grounded: 
   return body;
 }
 
-/** Shared POST helper — retries the alternate grounding-tool spelling on 400. Returns the full response JSON. */
+/**
+ * Fallback models tried in order when the primary model (GEMINI_MODEL or the
+ * default) is temporarily unavailable — 503 "model overloaded", 429 rate
+ * limit, 500 or 404 unknown model. gemini-3.5-flash / gemini-flash-latest are
+ * verified-live, high-capacity models so transient overload on a newer model
+ * never blocks the AI features.
+ */
+const FALLBACK_MODELS = ["gemini-3.5-flash", "gemini-flash-latest"];
+/** Transient failures worth a retry — same model, then the fallback models. */
+const TRANSIENT_STATUSES = new Set([500, 503, 429]);
+
+/** Shared POST helper — retries transient failures, then falls back to alternate models, and swaps the grounding-tool spelling on 400. Returns the full response JSON. */
 async function postGenerateRaw(key: string, body: Record<string, unknown>, timeoutMs: number): Promise<GeminiResponse> {
-  const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), timeoutMs);
-  try {
-    let lastError = "Gemini request failed";
-    const variants = body.tools ? TOOL_VARIANTS : [TOOL_VARIANTS[0]];
-    for (let v = 0; v < variants.length; v++) {
-      const payload = body.tools ? { ...body, tools: [{ [variants[v]]: {} }] } : body;
-      const res = await fetch(`${BASE}/${MODEL}:generateContent?key=${key}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-        signal: ctrl.signal,
-        cache: "no-store",
-      });
-      if (res.ok) return (await res.json()) as GeminiResponse;
-      const detail = await res.text().catch(() => "");
-      lastError = `Gemini HTTP ${res.status}: ${detail.slice(0, 180)}`;
-      // retry the other tool spelling only when the request itself was rejected
-      if (res.status !== 400) break;
+  const models = [MODEL, ...FALLBACK_MODELS.filter((m) => m !== MODEL)];
+  const variants = body.tools ? TOOL_VARIANTS : [TOOL_VARIANTS[0]];
+  let lastError = "Gemini request failed";
+
+  for (let m = 0; m < models.length; m++) {
+    const model = models[m];
+    // primary model gets one immediate retry on transient errors; fallbacks run once
+    const attempts = m === 0 ? 2 : 1;
+    for (let attempt = 0; attempt < attempts; attempt++) {
+      if (attempt > 0) await new Promise((r) => setTimeout(r, 2500));
+      for (const variant of variants) {
+        const payload = body.tools ? { ...body, tools: [{ [variant]: {} }] } : body;
+        const ctrl = new AbortController();
+        const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+        let res: Response;
+        try {
+          res = await fetch(`${BASE}/${model}:generateContent?key=${key}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+            signal: ctrl.signal,
+            cache: "no-store",
+          });
+        } finally {
+          clearTimeout(timer);
+        }
+        if (res.ok) return (await res.json()) as GeminiResponse;
+        const detail = await res.text().catch(() => "");
+        lastError = `Gemini HTTP ${res.status} (${model}): ${detail.slice(0, 180)}`;
+        // swap the grounding-tool spelling only when the request itself was rejected
+        if (res.status !== 400) break;
+      }
+      if (!TRANSIENT_STATUSES.has(Number(lastError.match(/HTTP (\d+)/)?.[1]))) break;
     }
-    throw new Error(lastError);
-  } finally {
-    clearTimeout(timer);
   }
+  throw new Error(lastError);
 }
 
 function partsText(json: GeminiResponse): string {
