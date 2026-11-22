@@ -37,6 +37,7 @@ interface GeminiResponse {
  * so both (plus two common alternatives) are accepted — a name mismatch was
  * the reason production reported "AI is not configured" although a key was
  * added before deploying.
+ * (Case-insensitive: "Gemini_Api_Key" also matches; empty values are ignored.)
  */
 const KEY_VARS = [
   "GEMINI_API_KEY",
