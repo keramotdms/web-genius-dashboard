@@ -488,11 +488,16 @@ export default function References({ data, reload }: { data: DashboardData; relo
     }
   };
 
-  // Level 1 — CMS counts (independent of other filters)
+  // Level 1 — CMS counts (independent of other filters). The 5 core platforms
+  // ALWAYS show — even with 0 sites — in the order the team defined
+  // (WordPress, Wix, Shopify, Squarespace, Webflow); "Other" appears only
+  // when sheet data actually contains it.
   const platformOptions = useMemo(() => {
     const counts = new Map<string, number>();
     for (const r of data.references) counts.set(r.platform, (counts.get(r.platform) ?? 0) + 1);
-    return [["All", data.references.length] as [string, number], ...[...counts.entries()].sort((a, b) => b[1] - a[1])];
+    const core = CORE_PLATFORMS.filter((p) => p !== "Other").map((p) => [p, counts.get(p) ?? 0] as [string, number]);
+    const extra = [...counts.entries()].filter(([p]) => !CORE_PLATFORMS.includes(p));
+    return [["All", data.references.length] as [string, number], ...core, ...extra];
   }, [data.references]);
 
   // Level 2 — website categories within the selected CMS

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db, ensureSchema, resolveDatabaseUrl } from "@/lib/db";
-import { aiConfigured } from "@/lib/gemini";
+import { aiConfigured, geminiKeySource } from "@/lib/gemini";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -71,7 +71,17 @@ export async function GET() {
   }
 
   // 5) Gemini key present? (AI features degrade gracefully without it)
-  checks.geminiKey = { ok: aiConfigured(), required: false };
+  //    "source" shows WHICH env var name supplied it (never the value) so a
+  //    name mismatch on Vercel is visible at a glance.
+  const geminiSource = geminiKeySource();
+  checks.geminiKey = {
+    ok: aiConfigured(),
+    required: false,
+    source: geminiSource || undefined,
+    hint: aiConfigured()
+      ? undefined
+      : "No Gemini key found. Set GEMINI_API_KEY (or GOOGLE_GENERATIVE_AI_API_KEY from the Vercel AI Marketplace) in Settings → Environment Variables, then Redeploy.",
+  };
 
   return NextResponse.json({
     ok,

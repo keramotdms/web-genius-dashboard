@@ -29,8 +29,41 @@ interface GeminiResponse {
   }>;
 }
 
+/**
+ * Env vars that may hold the Gemini API key, checked in order.
+ *
+ * GEMINI_API_KEY is the documented name, but keys created through Vercel's
+ * AI Marketplace integration are injected as GOOGLE_GENERATIVE_AI_API_KEY,
+ * so both (plus two common alternatives) are accepted — a name mismatch was
+ * the reason production reported "AI is not configured" although a key was
+ * added before deploying.
+ */
+const KEY_VARS = [
+  "GEMINI_API_KEY",
+  "GOOGLE_GENERATIVE_AI_API_KEY",
+  "GOOGLE_API_KEY",
+  "GEMINI_KEY",
+] as const;
+
+function geminiKey(): string | undefined {
+  for (const name of KEY_VARS) {
+    const v = process.env[name];
+    if (v && v.trim()) return v.trim();
+  }
+  return undefined;
+}
+
 export function aiConfigured(): boolean {
-  return Boolean(process.env.GEMINI_API_KEY);
+  return Boolean(geminiKey());
+}
+
+/** Which env var supplied the key ("" when none). Diagnosis only — never returns the value. */
+export function geminiKeySource(): string {
+  for (const name of KEY_VARS) {
+    const v = process.env[name];
+    if (v && v.trim()) return name;
+  }
+  return "";
 }
 
 interface GeminiOptions {
@@ -91,7 +124,7 @@ function partsText(json: GeminiResponse): string {
 
 /** One-shot text call. Throws on any failure — callers decide the fallback. */
 export async function geminiText(system: string, user: string, opts: GeminiOptions = {}): Promise<string> {
-  const key = process.env.GEMINI_API_KEY;
+  const key = geminiKey();
   if (!key) throw new Error("GEMINI_API_KEY is not set");
   const json = await postGenerateRaw(key, buildBody(system, user, opts, Boolean(opts.grounding)), opts.timeoutMs ?? 30_000);
   const text = partsText(json);
@@ -124,7 +157,7 @@ export function extractGroundedUrls(json: unknown): WebSuggestion[] {
 
 /** Raw grounded call — used when the caller needs the full JSON (grounding metadata). */
 export async function geminiGroundedJson(system: string, user: string, opts: GeminiOptions = {}): Promise<unknown> {
-  const key = process.env.GEMINI_API_KEY;
+  const key = geminiKey();
   if (!key) throw new Error("GEMINI_API_KEY is not set");
   return postGenerateRaw(key, buildBody(system, user, opts, true), opts.timeoutMs ?? 30_000);
 }
