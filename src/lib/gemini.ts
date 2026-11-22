@@ -153,6 +153,19 @@ async function postGenerateRaw(key: string, body: Record<string, unknown>, timeo
         timedOut = false;
         if (res.ok) return (await res.json()) as GeminiResponse;
         const detail = await res.text().catch(() => "");
+
+        if (res.status === 429) {
+          // Quota is shared across ALL models on the same key — trying other
+          // models or retrying just burns the remaining allowance. Stop here
+          // with a human-readable message (the raw JSON made scary toasts).
+          const delay = /"retryDelay"\s*:\s*"(\d+s)"/.exec(detail)?.[1];
+          throw new Error(
+            `Gemini free quota finished (HTTP 429${delay ? ` — try again in ${delay}` : ""}). ` +
+              `Per-minute limits reset in a minute; the daily limit resets at midnight Pacific (~2pm Dhaka time). ` +
+              `Meanwhile the remaining sites can be categorized manually.`,
+          );
+        }
+
         lastError = `Gemini HTTP ${res.status} (${model}): ${detail.slice(0, 180)}`;
         // swap the grounding-tool spelling only when the request itself was rejected
         if (res.status !== 400) break;
