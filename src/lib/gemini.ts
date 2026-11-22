@@ -45,12 +45,21 @@ const KEY_VARS = [
   "GEMINI_KEY",
 ] as const;
 
-function geminiKey(): string | undefined {
-  for (const name of KEY_VARS) {
-    const v = process.env[name];
-    if (v && v.trim()) return v.trim();
+/** Case/separator-insensitive comparison so "Gemini_Api_Key" also matches. */
+const norm = (s: string) => s.toUpperCase().replace(/[^A-Z0-9]/g, "");
+const KEY_TARGETS = KEY_VARS.map(norm);
+
+function findKeyEntry(): [name: string, value: string] | undefined {
+  for (const target of KEY_TARGETS) {
+    for (const [name, value] of Object.entries(process.env)) {
+      if (value && value.trim() && norm(name) === target) return [name, value.trim()];
+    }
   }
   return undefined;
+}
+
+function geminiKey(): string | undefined {
+  return findKeyEntry()?.[1];
 }
 
 export function aiConfigured(): boolean {
@@ -59,11 +68,19 @@ export function aiConfigured(): boolean {
 
 /** Which env var supplied the key ("" when none). Diagnosis only — never returns the value. */
 export function geminiKeySource(): string {
-  for (const name of KEY_VARS) {
-    const v = process.env[name];
-    if (v && v.trim()) return name;
-  }
-  return "";
+  return findKeyEntry()?.[0] ?? "";
+}
+
+/**
+ * Every env var NAME that looks Gemini/Google-related (never values).
+ * Lets /api/health show exactly what the deployment CAN see, so a wrongly
+ * named or wrongly scoped key on Vercel is obvious at a glance.
+ */
+export function geminiKeyCandidates(): Array<{ name: string; empty: boolean }> {
+  return Object.keys(process.env)
+    .filter((n) => /gemini|google/i.test(n))
+    .sort()
+    .map((n) => ({ name: n, empty: !String(process.env[n] ?? "").trim() }));
 }
 
 interface GeminiOptions {
