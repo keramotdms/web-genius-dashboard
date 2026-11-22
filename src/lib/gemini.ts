@@ -158,7 +158,10 @@ async function postGenerateRaw(key: string, body: Record<string, unknown>, timeo
         if (res.status !== 400) break;
       }
       const status = Number(lastError.match(/HTTP (\d+)/)?.[1]);
-      if (!(timedOut || TRANSIENT_STATUSES.has(status))) break;
+      // a timed-out attempt is NOT retried on the same model — that just burns
+      // the serverless time budget; go straight to the fallback models instead
+      if (timedOut) break;
+      if (!TRANSIENT_STATUSES.has(status)) break;
     }
   }
   throw new Error(lastError);

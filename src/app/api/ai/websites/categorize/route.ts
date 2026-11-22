@@ -19,8 +19,10 @@ export const maxDuration = 90;
  * so they survive sheet re-syncs.
  */
 
-const BATCH_SIZE = 25;
-const MAX_BATCHES_PER_CALL = 2;
+const BATCH_SIZE = 15;
+const MAX_BATCHES_PER_CALL = 4;
+/** Stay under Vercel's 90s function limit — stop early and report the rest as "remaining". */
+const TIME_BUDGET_MS = 75_000;
 
 function candidates(refs: RefSite[]): RefSite[] {
   return refs.filter((r) => isGenericBusiness(r.businessCategory) || !isValidWebsiteCategory(r.websiteCategory));
@@ -57,7 +59,7 @@ Return ONLY a compact JSON array (no markdown fences): [{"i": <index>, "website"
     await geminiText(
       "You return only valid compact JSON. No commentary.",
       prompt,
-      { temperature: 0.1, maxOutputTokens: 4000, timeoutMs: 45_000 },
+      { temperature: 0.1, maxOutputTokens: 4000, timeoutMs: 25_000 },
     )
   )
     .replace(/```json|```/g, "")
@@ -102,8 +104,10 @@ export async function POST() {
     const applied: Array<{ url: string; websiteCategory: string; businessCategory: string }> = [];
     let processed = 0;
     let warning = "";
+    const startedAt = Date.now();
 
     for (let b = 0; b < MAX_BATCHES_PER_CALL && processed < all.length; b++) {
+      if (Date.now() - startedAt > TIME_BUDGET_MS) break; // out of time — remaining count tells the user to click again
       const batch = all.slice(b * BATCH_SIZE, (b + 1) * BATCH_SIZE);
       if (!batch.length) break;
       try {
