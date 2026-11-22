@@ -1,0 +1,80 @@
+generator client {
+  provider      = "prisma-client-js"
+  // "native" = the platform the client is generated on (sandbox/laptop);
+  // rhel-openssl-3.0.x = Vercel serverless (Amazon Linux 2023). Without the
+  // rhel target the query engine is missing at runtime on Vercel and every
+  // API route crashes with an empty 500 body ("Unexpected end of JSON input"
+  // in the dashboard UI).
+  binaryTargets = ["native", "rhel-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Message {
+  id        String   @id @default(cuid())
+  author    String
+  content   String
+  createdAt DateTime @default(now())
+}
+
+// Reference websites added manually from the dashboard (merged into the
+// sheet-synced reference library at read time).
+// DB columns keep the old "businessType"/"subcategory" names (no migration
+// needed); in code "businessType" holds the website category (level 2) and
+// "subcategory" holds the business-name category (level 3).
+model CustomSite {
+  id               String   @id @default(cuid())
+  url              String   @unique
+  platform         String
+  websiteCategory  String   @map("businessType")
+  businessCategory String   @map("subcategory")
+  category         String   @default("")
+  labels           String[] @default([])
+  createdAt        DateTime @default(now())
+}
+
+// Manual overrides for sheet-synced reference websites, keyed by normalized
+// URL. Applied after parsing so a hand-fixed classification — categories AND
+// big-client labels — survives every sheet re-sync. Empty strings mean "no
+// manual fix for this level" and are ignored when merging.
+model SiteOverride {
+  id               String   @id @default(cuid())
+  url              String   @unique
+  websiteCategory  String   @default("") @map("mainCategory")
+  businessCategory String   @default("") @map("subCategory")
+  labels           String[] @default([])
+  createdAt        DateTime @default(now())
+}
+
+// Sales orders — the single source of truth for the dashboard.
+// Seeded from the Google Sheet on first run; afterwards edited from the
+// Orders tab. "Sync from Sheet" replaces sheet-origin rows and keeps
+// UI-created rows.
+// NOTE: sheet row ids are NOT globally unique (one client id can appear on
+// several rows), so every row gets its own cuid and the sheet id is kept
+// in sheetId for reference only.
+model Order {
+  id         String   @id @default(cuid())
+  origin     String   @default("ui")
+  sheetId    String   @default("")
+  employee   String
+  department String   @default("")
+  date       String   @default("")
+  source     String   @default("")
+  profile    String   @default("")
+  clientId   String   @default("")
+  orderNo    String   @default("")
+  service    String   @default("Other")
+  status     String   @default("WIP")
+  amount     Float    @default(0)
+  fresh      String   @default("")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([date])
+  @@index([employee])
+  @@index([origin])
+}
