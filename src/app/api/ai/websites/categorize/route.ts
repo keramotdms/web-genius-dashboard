@@ -19,7 +19,7 @@ export const maxDuration = 90;
  * so they survive sheet re-syncs.
  */
 
-const BATCH_SIZE = 60;
+const BATCH_SIZE = 25;
 const MAX_BATCHES_PER_CALL = 2;
 
 function candidates(refs: RefSite[]): RefSite[] {
@@ -57,7 +57,7 @@ Return ONLY a compact JSON array (no markdown fences): [{"i": <index>, "website"
     await geminiText(
       "You return only valid compact JSON. No commentary.",
       prompt,
-      { temperature: 0.1, maxOutputTokens: 4000, timeoutMs: 60_000 },
+      { temperature: 0.1, maxOutputTokens: 4000, timeoutMs: 45_000 },
     )
   )
     .replace(/```json|```/g, "")

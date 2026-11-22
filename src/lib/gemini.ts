@@ -121,6 +121,7 @@ async function postGenerateRaw(key: string, body: Record<string, unknown>, timeo
   const models = [MODEL, ...FALLBACK_MODELS.filter((m) => m !== MODEL)];
   const variants = body.tools ? TOOL_VARIANTS : [TOOL_VARIANTS[0]];
   let lastError = "Gemini request failed";
+  let timedOut = false;
 
   for (let m = 0; m < models.length; m++) {
     const model = models[m];
@@ -141,16 +142,23 @@ async function postGenerateRaw(key: string, body: Record<string, unknown>, timeo
             signal: ctrl.signal,
             cache: "no-store",
           });
+        } catch {
+          // AbortError (our timeout) or network error — try the next attempt/model
+          timedOut = true;
+          lastError = `Gemini request timed out after ${Math.round(timeoutMs / 1000)}s (${model})`;
+          break;
         } finally {
           clearTimeout(timer);
         }
+        timedOut = false;
         if (res.ok) return (await res.json()) as GeminiResponse;
         const detail = await res.text().catch(() => "");
         lastError = `Gemini HTTP ${res.status} (${model}): ${detail.slice(0, 180)}`;
         // swap the grounding-tool spelling only when the request itself was rejected
         if (res.status !== 400) break;
       }
-      if (!TRANSIENT_STATUSES.has(Number(lastError.match(/HTTP (\d+)/)?.[1]))) break;
+      const status = Number(lastError.match(/HTTP (\d+)/)?.[1]);
+      if (!(timedOut || TRANSIENT_STATUSES.has(status))) break;
     }
   }
   throw new Error(lastError);
