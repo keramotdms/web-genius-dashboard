@@ -108,13 +108,19 @@ function buildBody(system: string, user: string, opts: GeminiOptions, grounded: 
 /**
  * Fallback models tried in order when the primary model (GEMINI_MODEL or the
  * default) is temporarily unavailable — 503 "model overloaded", 429 rate
- * limit, 500 or 404 unknown model. gemini-3.5-flash / gemini-flash-latest are
- * verified-live, high-capacity models; gemini-flash-lite-latest is the
- * lightweight alias that usually still has headroom when the bigger flash
- * models are overloaded (peak-hour 503 storms). A wrong name 404s in ~1s, so
- * the cost of a guess is negligible — verify with GET /api/ai/models.
+ * limit, 500 or 404 unknown model. Chain mixes generations and capacity pools
+ * (verified live via GET /api/ai/models): 3.5-flash and the aliases cover the
+ * newest generations, while the -lite models usually still have headroom when
+ * the bigger flash models are overloaded at peak hours. A wrong name 404s in
+ * ~1s, so the cost of a dead entry is negligible.
  */
-const FALLBACK_MODELS = ["gemini-3.5-flash", "gemini-flash-latest", "gemini-flash-lite-latest"];
+const FALLBACK_MODELS = [
+  "gemini-3.5-flash",
+  "gemini-flash-latest",
+  "gemini-flash-lite-latest",
+  "gemini-3.5-flash-lite",
+  "gemini-2.5-flash-lite",
+];
 /** Transient failures worth a retry — same model, then the fallback models. */
 const TRANSIENT_STATUSES = new Set([500, 503, 429]);
 /** Cool-down between model switches on transient errors — lets Google shed load. */
