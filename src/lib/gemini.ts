@@ -109,18 +109,23 @@ function buildBody(system: string, user: string, opts: GeminiOptions, grounded: 
  * Fallback models tried in order when the primary model (GEMINI_MODEL or the
  * default) is temporarily unavailable — 503 "model overloaded", 429 rate
  * limit, 500 or 404 unknown model. gemini-3.5-flash / gemini-flash-latest are
- * verified-live, high-capacity models so transient overload on a newer model
- * never blocks the AI features.
+ * verified-live, high-capacity models; gemini-flash-lite-latest is the
+ * lightweight alias that usually still has headroom when the bigger flash
+ * models are overloaded (peak-hour 503 storms). A wrong name 404s in ~1s, so
+ * the cost of a guess is negligible — verify with GET /api/ai/models.
  */
-const FALLBACK_MODELS = ["gemini-3.5-flash", "gemini-flash-latest"];
+const FALLBACK_MODELS = ["gemini-3.5-flash", "gemini-flash-latest", "gemini-flash-lite-latest"];
 /** Transient failures worth a retry — same model, then the fallback models. */
 const TRANSIENT_STATUSES = new Set([500, 503, 429]);
+/** Cool-down between model switches on transient errors — lets Google shed load. */
+const MODEL_SWITCH_BACKOFF_MS = 3000;
 
 /** Shared POST helper — retries transient failures, then falls back to alternate models, and swaps the grounding-tool spelling on 400. Returns the full response JSON. */
 async function postGenerateRaw(key: string, body: Record<string, unknown>, timeoutMs: number): Promise<GeminiResponse> {
   const models = [MODEL, ...FALLBACK_MODELS.filter((m) => m !== MODEL)];
   const variants = body.tools ? TOOL_VARIANTS : [TOOL_VARIANTS[0]];
   let lastError = "Gemini request failed";
+  let lastStatus = 0;
   let timedOut = false;
 
   for (let m = 0; m < models.length; m++) {
@@ -171,10 +176,17 @@ async function postGenerateRaw(key: string, body: Record<string, unknown>, timeo
         if (res.status !== 400) break;
       }
       const status = Number(lastError.match(/HTTP (\d+)/)?.[1]);
+      lastStatus = status;
       // a timed-out attempt is NOT retried on the same model — that just burns
       // the serverless time budget; go straight to the fallback models instead
       if (timedOut) break;
       if (!TRANSIENT_STATUSES.has(status)) break;
+    }
+    // brief cool-down before switching models on a 503/500 storm — Google's
+    // load balancer often frees a slot within seconds. Skipped after a timeout
+    // (a hang means we should move on immediately, not wait).
+    if (!timedOut && m < models.length - 1 && TRANSIENT_STATUSES.has(lastStatus)) {
+      await new Promise((r) => setTimeout(r, MODEL_SWITCH_BACKOFF_MS));
     }
   }
   throw new Error(lastError);
@@ -185,6 +197,25 @@ function partsText(json: GeminiResponse): string {
     .map((p) => p.text ?? "")
     .join("")
     .trim();
+}
+
+/**
+ * Names of the Gemini models the server key can actually see right now
+ * (only models that support generateContent). Diagnosis only — used by
+ * GET /api/ai/models to pick live fallback models and debug 503 storms.
+ * Never returns or logs the key itself.
+ */
+export async function listGeminiModels(): Promise<string[]> {
+  const key = geminiKey();
+  if (!key) return [];
+  const res = await fetch(`${BASE}?key=${key}&pageSize=100`, { cache: "no-store" });
+  if (!res.ok) throw new Error(`ListModels HTTP ${res.status}: ${(await res.text().catch(() => "")).slice(0, 180)}`);
+  const json = (await res.json()) as { models?: Array<{ name?: string; supportedGenerationMethods?: string[] }> };
+  return (json.models ?? [])
+    .filter((m) => (m.supportedGenerationMethods ?? []).includes("generateContent"))
+    .map((m) => String(m.name ?? "").replace(/^models\//, ""))
+    .filter((n) => /^gemini/i.test(n))
+    .sort();
 }
 
 /** One-shot text call. Throws on any failure — callers decide the fallback. */
