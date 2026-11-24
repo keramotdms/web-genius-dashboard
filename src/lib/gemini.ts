@@ -220,10 +220,13 @@ async function postOpenRouter(key: string, system: string, user: string, opts: G
     if (res.status === 429) {
       const msg = detail.toLowerCase();
       // Two very different 429s:
-      // - "free-models-per-day" — the shared 50/day cap is really done; stop.
-      // - "temporarily rate-limited upstream" — one provider lane is busy;
-      //   wait a beat and try the next free model (independent upstreams).
-      if (msg.includes("per-day") || msg.includes("daily limit") || msg.includes("free-models-per-day")) {
+      // - "free-models-per-day" — OpenRouter's own shared 50/day cap is done.
+      //   (Match ONLY that exact resource name: upstream providers also emit
+      //   "tokens-per-day" for their own shared pools — those are NOT the
+      //   account cap and just mean "try another lane".)
+      // - anything else (tpm_rate_limit_exceeded, "temporarily rate-limited
+      //   upstream") — one provider lane is busy; wait a beat, next model.
+      if (msg.includes("free-models-per-day")) {
         throw new Error(
           `OpenRouter free daily limit reached (50 requests on :free models, resets in ~24h). ` +
             `Top up credits at openrouter.ai/credits or wait for the reset.`,
