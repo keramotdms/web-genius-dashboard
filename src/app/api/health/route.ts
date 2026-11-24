@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db, ensureSchema, resolveDatabaseUrl } from "@/lib/db";
-import { aiConfigured, geminiKeyCandidates, geminiKeySource } from "@/lib/gemini";
+import { aiConfigured, geminiKeyCandidates, geminiKeySource, openRouterConfigured } from "@/lib/gemini";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -70,22 +70,34 @@ export async function GET() {
     checks.googleSheet = { ok: false, error: (e as Error).message.slice(0, 200) };
   }
 
-  // 5) Gemini key present? (AI features degrade gracefully without it)
-  //    "source" shows WHICH env var name supplied it (never the value);
-  //    "candidates" lists every GEMINI*/GOOGLE* env var name this deployment
-  //    can actually see — so a wrongly named or wrongly scoped key is obvious.
+  // 5) AI keys present? (AI features degrade gracefully without them)
+  //    Two providers are supported: OpenRouter (tried FIRST when set — its
+  //    free models keep working after the Gemini daily cap) and Gemini direct.
+  //    "source"/"candidates" show WHICH env var names are visible (never values).
   const geminiSource = geminiKeySource();
   const candidates = geminiKeyCandidates();
   checks.geminiKey = {
-    ok: aiConfigured(),
+    ok: Boolean(geminiSource),
     required: false,
     source: geminiSource || undefined,
     candidates: candidates.length ? candidates : undefined,
-    hint: aiConfigured()
+    hint: geminiSource
       ? undefined
       : candidates.length
         ? `Found env var${candidates.length > 1 ? "s" : ""} ${candidates.map((c) => c.name + (c.empty ? " (empty)" : "")) .join(", ")}, but none is a recognized key name. Rename the key to GEMINI_API_KEY (Production scope) or use one of: GEMINI_API_KEY, GOOGLE_GENERATIVE_AI_API_KEY, GOOGLE_API_KEY, GEMINI_KEY — then Redeploy.`
-        : "No GEMINI*/GOOGLE* env var is visible to this deployment. Add GEMINI_API_KEY with the value of your Gemini key in Vercel → Settings → Environment Variables (scope: Production, Preview and Development), then Redeploy.",
+        : openRouterConfigured()
+          ? "No GEMINI*/GOOGLE* env var visible — fine: AI runs through OpenRouter right now. Add GEMINI_API_KEY if you also want the direct-Gemini fallback."
+          : "No GEMINI*/GOOGLE* env var is visible to this deployment. Add GEMINI_API_KEY with the value of your Gemini key in Vercel → Settings → Environment Variables (scope: Production, Preview and Development), then Redeploy.",
+  };
+  checks.aiProvider = {
+    ok: aiConfigured(),
+    openRouter: openRouterConfigured(),
+    gemini: geminiSource || null,
+    note: openRouterConfigured()
+      ? "AI calls route: OpenRouter free models → Gemini direct."
+      : geminiSource
+        ? "AI calls route: Gemini direct (primary + 5 fallback models)."
+        : "AI is not configured — categorize/insights will report an error until a key is added.",
   };
 
   return NextResponse.json({

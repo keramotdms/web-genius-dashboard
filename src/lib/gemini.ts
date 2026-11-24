@@ -63,8 +63,29 @@ function geminiKey(): string | undefined {
   return findKeyEntry()?.[1];
 }
 
+/**
+ * OpenRouter key lookup (same case-insensitive style). When present, AI calls
+ * go to OpenRouter FIRST — its free models have fresh quota even after the
+ * Gemini free daily cap is exhausted — and only fall back to Gemini direct
+ * when OpenRouter fails.
+ */
+const OR_KEY_TARGETS = ["OPENROUTER_API_KEY", "OPENROUTER_KEY"].map(norm);
+
+function openRouterKey(): string | undefined {
+  for (const target of OR_KEY_TARGETS) {
+    for (const [name, value] of Object.entries(process.env)) {
+      if (value && value.trim() && norm(name) === target) return value.trim();
+    }
+  }
+  return undefined;
+}
+
+export function openRouterConfigured(): boolean {
+  return Boolean(openRouterKey());
+}
+
 export function aiConfigured(): boolean {
-  return Boolean(geminiKey());
+  return Boolean(openRouterKey() || geminiKey());
 }
 
 /** Which env var supplied the key ("" when none). Diagnosis only — never returns the value. */
@@ -125,6 +146,82 @@ const FALLBACK_MODELS = [
 const TRANSIENT_STATUSES = new Set([500, 503, 429]);
 /** Cool-down between model switches on transient errors — lets Google shed load. */
 const MODEL_SWITCH_BACKOFF_MS = 3000;
+
+/**
+ * OpenRouter — OpenAI-compatible aggregator (https://openrouter.ai).
+ * Used BEFORE the direct Gemini chain when OPENROUTER_API_KEY is set, because
+ * its free models keep working after the Gemini free daily cap (429) hits.
+ * The free chain was verified live on 2026-11-24: ernie-5.5-flash returns
+ * clean compact JSON for the categorize prompt; the gemma/ling backups were
+ * temporarily down upstream but may recover — a dead model fails in ~2s and
+ * the loop just moves on. Free tier: 50 requests/day on :free models.
+ */
+const OR_BASE = "https://openrouter.ai/api/v1";
+const OR_FREE_MODELS = [
+  "baidu/ernie-5.5-flash-preview:free",
+  "google/gemma-4-31b-it:free",
+  "inclusionai/ling-3.2-flash:free",
+];
+
+interface OpenRouterResponse {
+  choices?: Array<{ message?: { content?: string | null } }>;
+}
+
+/** One OpenRouter chat completion across the free-model chain. Returns the text or throws the last error. */
+async function postOpenRouter(key: string, system: string, user: string, opts: GeminiOptions): Promise<string> {
+  const timeoutMs = opts.timeoutMs ?? 30_000;
+  // reasoning-style free models burn tokens before the visible content, so
+  // keep a floor comfortably above what the visible answer needs
+  const maxTokens = Math.max(opts.maxOutputTokens ?? 900, 1500);
+  let lastError = "OpenRouter request failed";
+
+  for (const model of OR_FREE_MODELS) {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+    let res: Response;
+    try {
+      res = await fetch(`${OR_BASE}/chat/completions`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model,
+          messages: [
+            { role: "system", content: system },
+            { role: "user", content: user },
+          ],
+          temperature: opts.temperature ?? 0.4,
+          max_tokens: maxTokens,
+        }),
+        signal: ctrl.signal,
+        cache: "no-store",
+      });
+    } catch {
+      lastError = `OpenRouter request timed out after ${Math.round(timeoutMs / 1000)}s (${model})`;
+      clearTimeout(timer);
+      continue;
+    }
+    clearTimeout(timer);
+
+    if (res.ok) {
+      const json = (await res.json().catch(() => ({}))) as OpenRouterResponse;
+      const text = (json.choices?.[0]?.message?.content ?? "").trim();
+      if (text) return text;
+      // reasoning-only models can return all-empty content — try the next one
+      lastError = `OpenRouter empty response (${model})`;
+      continue;
+    }
+    const detail = await res.text().catch(() => "");
+    if (res.status === 429) {
+      // the 50/day free quota is shared across ALL :free models — stop the chain
+      throw new Error(
+        `OpenRouter free daily limit reached (50 requests on :free models, resets in ~24h). ` +
+          `Top up credits at openrouter.ai/credits or wait for the reset.`,
+      );
+    }
+    lastError = `OpenRouter HTTP ${res.status} (${model}): ${detail.slice(0, 180)}`;
+  }
+  throw new Error(lastError);
+}
 
 /** Shared POST helper — retries transient failures, then falls back to alternate models, and swaps the grounding-tool spelling on 400. Returns the full response JSON. */
 async function postGenerateRaw(key: string, body: Record<string, unknown>, timeoutMs: number): Promise<GeminiResponse> {
@@ -224,14 +321,38 @@ export async function listGeminiModels(): Promise<string[]> {
     .sort();
 }
 
-/** One-shot text call. Throws on any failure — callers decide the fallback. */
-export async function geminiText(system: string, user: string, opts: GeminiOptions = {}): Promise<string> {
+/** Direct-Gemini text call (skips OpenRouter). Throws on any failure. */
+async function geminiDirectText(system: string, user: string, opts: GeminiOptions): Promise<string> {
   const key = geminiKey();
   if (!key) throw new Error("GEMINI_API_KEY is not set");
   const json = await postGenerateRaw(key, buildBody(system, user, opts, Boolean(opts.grounding)), opts.timeoutMs ?? 30_000);
   const text = partsText(json);
   if (!text) throw new Error("Empty Gemini response");
   return text;
+}
+
+/**
+ * One-shot text call with automatic provider routing:
+ * 1. OpenRouter free-model chain (when OPENROUTER_API_KEY is set) — keeps
+ *    working after the Gemini free daily cap hits;
+ * 2. direct Gemini chain (primary + fallback models).
+ * Throws with BOTH provider errors when both paths fail, so the toast tells
+ * the whole story.
+ */
+export async function geminiText(system: string, user: string, opts: GeminiOptions = {}): Promise<string> {
+  const orKey = openRouterKey();
+  if (!orKey) return geminiDirectText(system, user, opts);
+  try {
+    return await postOpenRouter(orKey, system, user, opts);
+  } catch (e) {
+    const orError = (e as Error).message;
+    if (!geminiKey()) throw e; // nothing to fall back to — surface the OpenRouter error
+    try {
+      return await geminiDirectText(system, user, opts);
+    } catch (ge) {
+      throw new Error(`${orError} | Gemini fallback also failed: ${(ge as Error).message}`);
+    }
+  }
 }
 
 export interface WebSuggestion {

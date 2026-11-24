@@ -59,7 +59,10 @@ Return ONLY a compact JSON array (no markdown fences): [{"i": <index>, "website"
     await geminiText(
       "You return only valid compact JSON. No commentary.",
       prompt,
-      { temperature: 0.1, maxOutputTokens: 4000, timeoutMs: 25_000 },
+      // 40s: OpenRouter's free reasoning models spend tokens before the visible
+      // content and can take 20–35s for a 15-site batch (direct Gemini finishes
+      // in ~10–20s, well under this cap)
+      { temperature: 0.1, maxOutputTokens: 4000, timeoutMs: 40_000 },
     )
   )
     .replace(/```json|```/g, "")
