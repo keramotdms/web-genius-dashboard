@@ -111,6 +111,8 @@ interface GeminiOptions {
   /** enable Google Search grounding (free tier) for fresh web results */
   grounding?: boolean;
   timeoutMs?: number;
+  /** absolute epoch ms — no attempt may push past it (Vercel 90s window). */
+  deadlineMs?: number;
 }
 
 function buildBody(system: string, user: string, opts: GeminiOptions, grounded: boolean): Record<string, unknown> {
@@ -159,21 +161,23 @@ const MODEL_SWITCH_BACKOFF_MS = 2000;
 const OR_BASE = "https://openrouter.ai/api/v1";
 const OR_FREE_MODELS = [
   "baidu/ernie-5.5-flash-preview:free",
+  "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "google/gemma-4-31b-it:free",
   "nvidia/nemotron-3.5-super-vl:free",
   "particle-ai/particle-1:free",
   "dots-studio/dots-3-note-preview:free",
-  "nvidia/nemotron-3-ultra-550b-a55b:free",
-  "liquid/lfm-3-1.7b:free",
-  "recursive/flint-v1.0:free",
-  "google/gemma-4-31b-it:free",
   "inclusionai/ling-3.2-flash:free",
+  "recursive/flint-v1.0:free",
+  "liquid/lfm-3-1.7b:free",
 ];
 
 interface OpenRouterResponse {
   choices?: Array<{ message?: { content?: string | null } }>;
 }
 
-/** One OpenRouter chat completion across the free-model chain. Returns the text or throws the last error. */
+/** One OpenRouter chat completion across the free-model chain. Returns the text or throws the last error.
+ * Honours opts.deadlineMs: no attempt starts with <12s of budget left and each
+ * attempt's timeout is clamped so the chain can never overrun the window. */
 async function postOpenRouter(key: string, system: string, user: string, opts: GeminiOptions): Promise<string> {
   const timeoutMs = opts.timeoutMs ?? 30_000;
   // reasoning-style free models burn tokens before the visible content, so
@@ -182,8 +186,14 @@ async function postOpenRouter(key: string, system: string, user: string, opts: G
   let lastError = "OpenRouter request failed";
 
   for (const model of OR_FREE_MODELS) {
+    const remaining = opts.deadlineMs ? opts.deadlineMs - Date.now() : Infinity;
+    if (remaining < 12_000) {
+      lastError = `OpenRouter: out of time budget — click again to continue`;
+      break;
+    }
+    const attemptTimeout = Math.max(8_000, Math.min(timeoutMs, remaining - 2_000));
     const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+    const timer = setTimeout(() => ctrl.abort(), attemptTimeout);
     let res: Response;
     try {
       res = await fetch(`${OR_BASE}/chat/completions`, {
@@ -202,7 +212,7 @@ async function postOpenRouter(key: string, system: string, user: string, opts: G
         cache: "no-store",
       });
     } catch {
-      lastError = `OpenRouter request timed out after ${Math.round(timeoutMs / 1000)}s (${model})`;
+      lastError = `OpenRouter request timed out after ${Math.round(attemptTimeout / 1000)}s (${model})`;
       clearTimeout(timer);
       continue;
     }
@@ -241,8 +251,11 @@ async function postOpenRouter(key: string, system: string, user: string, opts: G
   throw new Error(lastError);
 }
 
-/** Shared POST helper — retries transient failures, then falls back to alternate models, and swaps the grounding-tool spelling on 400. Returns the full response JSON. */
-async function postGenerateRaw(key: string, body: Record<string, unknown>, timeoutMs: number): Promise<GeminiResponse> {
+/** Shared POST helper — retries transient failures, then falls back to alternate models, and swaps the grounding-tool spelling on 400. Returns the full response JSON.
+ * Honours deadlineMs (absolute epoch): attempts get clamped timeouts and the
+ * chain stops when too little time remains, so a failing chain can never
+ * push past Vercel's 90s function window. */
+async function postGenerateRaw(key: string, body: Record<string, unknown>, timeoutMs: number, deadlineMs = 0): Promise<GeminiResponse> {
   const models = [MODEL, ...FALLBACK_MODELS.filter((m) => m !== MODEL)];
   const variants = body.tools ? TOOL_VARIANTS : [TOOL_VARIANTS[0]];
   let lastError = "Gemini request failed";
@@ -251,14 +264,17 @@ async function postGenerateRaw(key: string, body: Record<string, unknown>, timeo
 
   for (let m = 0; m < models.length; m++) {
     const model = models[m];
+    const remaining = deadlineMs ? deadlineMs - Date.now() : Infinity;
+    if (deadlineMs && remaining < 8_000) break; // no time for a meaningful attempt
     // primary model gets one immediate retry on transient errors; fallbacks run once
     const attempts = m === 0 ? 2 : 1;
     for (let attempt = 0; attempt < attempts; attempt++) {
       if (attempt > 0) await new Promise((r) => setTimeout(r, 2500));
+      const attemptTimeout = Math.max(6_000, Math.min(timeoutMs, remaining - 2_000));
       for (const variant of variants) {
         const payload = body.tools ? { ...body, tools: [{ [variant]: {} }] } : body;
         const ctrl = new AbortController();
-        const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+        const timer = setTimeout(() => ctrl.abort(), attemptTimeout);
         let res: Response;
         try {
           res = await fetch(`${BASE}/${model}:generateContent?key=${key}`, {
@@ -271,7 +287,7 @@ async function postGenerateRaw(key: string, body: Record<string, unknown>, timeo
         } catch {
           // AbortError (our timeout) or network error — try the next attempt/model
           timedOut = true;
-          lastError = `Gemini request timed out after ${Math.round(timeoutMs / 1000)}s (${model})`;
+          lastError = `Gemini request timed out after ${Math.round(attemptTimeout / 1000)}s (${model})`;
           break;
         } finally {
           clearTimeout(timer);
@@ -305,9 +321,11 @@ async function postGenerateRaw(key: string, body: Record<string, unknown>, timeo
     }
     // brief cool-down before switching models on a 503/500 storm — Google's
     // load balancer often frees a slot within seconds. Skipped after a timeout
-    // (a hang means we should move on immediately, not wait).
-    if (!timedOut && m < models.length - 1 && TRANSIENT_STATUSES.has(lastStatus)) {
-      await new Promise((r) => setTimeout(r, MODEL_SWITCH_BACKOFF_MS));
+    // (a hang means we should move on immediately, not wait) or when the wait
+    // would push past the deadline.
+    const backoff = !timedOut && m < models.length - 1 && TRANSIENT_STATUSES.has(lastStatus) ? MODEL_SWITCH_BACKOFF_MS : 0;
+    if (backoff && (!deadlineMs || Date.now() + backoff < deadlineMs)) {
+      await new Promise((r) => setTimeout(r, backoff));
     }
   }
   throw new Error(lastError);
@@ -343,7 +361,7 @@ export async function listGeminiModels(): Promise<string[]> {
 async function geminiDirectText(system: string, user: string, opts: GeminiOptions): Promise<string> {
   const key = geminiKey();
   if (!key) throw new Error("GEMINI_API_KEY is not set");
-  const json = await postGenerateRaw(key, buildBody(system, user, opts, Boolean(opts.grounding)), opts.timeoutMs ?? 30_000);
+  const json = await postGenerateRaw(key, buildBody(system, user, opts, Boolean(opts.grounding)), opts.timeoutMs ?? 30_000, opts.deadlineMs ?? 0);
   const text = partsText(json);
   if (!text) throw new Error("Empty Gemini response");
   return text;

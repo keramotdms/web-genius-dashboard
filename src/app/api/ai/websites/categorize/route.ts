@@ -34,8 +34,44 @@ function buildTaxonomyText(): string {
   return `WEBSITE CATEGORIES (level 2 — the type of website):\n${WEBSITE_CATEGORIES.map((w) => `- ${w}`).join("\n")}\n\nBUSINESS NAME CATEGORIES (level 3 — what the business is):\n${BUSINESS_CATEGORIES.join(" | ")}`;
 }
 
+const CATEGORY_STOPWORDS = new Set(["website", "site", "based", "type", "category", "the", "a", "an"]);
+
+/**
+ * Models shorten or paraphrase the 20 taxonomy names ("e-commerce",
+ * "corporate profile", "blog / magazine", "lms") — map any guess back to the
+ * exact category by token overlap. Ties prefer the more specific category
+ * (fewest words). Returns undefined when nothing overlaps — the site is then
+ * left in its generic bucket instead of getting a wrong label.
+ */
+function resolveWebsiteCategory(raw: string): string | undefined {
+  const words = String(raw)
+    .toLowerCase()
+    .split(/[^a-z0-9]+/)
+    .filter((w) => w.length > 1 && !CATEGORY_STOPWORDS.has(w));
+  if (!words.length) return undefined;
+  let best: string | undefined;
+  let bestScore = 0;
+  let bestLen = Infinity;
+  for (const cat of WEBSITE_CATEGORIES) {
+    const catWords = new Set(
+      cat
+        .toLowerCase()
+        .split(/[^a-z0-9]+/)
+        .filter((w) => w.length > 1 && !CATEGORY_STOPWORDS.has(w)),
+    );
+    const score = words.filter((w) => catWords.has(w)).length;
+    if (score > bestScore || (score > 0 && score === bestScore && catWords.size < bestLen)) {
+      best = cat;
+      bestScore = score;
+      bestLen = catWords.size;
+    }
+  }
+  return bestScore > 0 ? best : undefined;
+}
+
 async function classifyBatch(
-  batch: RefSite[]
+  batch: RefSite[],
+  deadlineMs: number,
 ): Promise<Map<number, { websiteCategory: string; businessCategory: string }>> {
   const lines = batch
     .map(
@@ -64,7 +100,7 @@ Return ONLY a compact JSON array (no markdown fences): [{"i": <index>, "website"
       // 32s: OpenRouter's free reasoning models spend tokens before the visible
       // content and can take 20–30s for a 15-site batch (direct Gemini finishes
       // in ~10–20s, well under this cap)
-      { temperature: 0.1, maxOutputTokens: 4000, timeoutMs: 32_000 },
+      { temperature: 0.1, maxOutputTokens: 4000, timeoutMs: 32_000, deadlineMs },
     )
   )
     .replace(/```json|```/g, "")
@@ -83,8 +119,9 @@ Return ONLY a compact JSON array (no markdown fences): [{"i": <index>, "website"
     const idx = Number(p?.i);
     const website = String(p?.website ?? "").trim();
     const business = String(p?.business ?? "").trim();
-    if (Number.isInteger(idx) && idx >= 0 && idx < batch.length && isValidWebsiteCategory(website) && business) {
-      out.set(idx, { websiteCategory: website, businessCategory: business });
+    const resolved = resolveWebsiteCategory(website);
+    if (Number.isInteger(idx) && idx >= 0 && idx < batch.length && resolved && business) {
+      out.set(idx, { websiteCategory: resolved, businessCategory: business });
     }
   }
   return out;
@@ -94,7 +131,7 @@ export async function POST() {
   try {
     if (!aiConfigured()) {
       return NextResponse.json(
-        { ok: false, error: "AI is not configured — add GEMINI_API_KEY in your environment variables first." },
+        { ok: false, error: "AI is not configured — add OPENROUTER_API_KEY or GEMINI_API_KEY in your environment variables first." },
         { status: 400 },
       );
     }
@@ -110,13 +147,16 @@ export async function POST() {
     let processed = 0;
     let warning = "";
     const startedAt = Date.now();
+    // hard ceiling for any batch attempt — keeps the worst failing batch well
+    // inside Vercel's 90s window even when every model in both chains fails
+    const deadline = startedAt + 80_000;
 
     for (let b = 0; b < MAX_BATCHES_PER_CALL && processed < all.length; b++) {
       if (Date.now() - startedAt > TIME_BUDGET_MS) break; // out of time — remaining count tells the user to click again
       const batch = all.slice(b * BATCH_SIZE, (b + 1) * BATCH_SIZE);
       if (!batch.length) break;
       try {
-        const results = await classifyBatch(batch);
+        const results = await classifyBatch(batch, deadline);
         processed += batch.length;
         for (const [idx, cls] of results) {
           const site = batch[idx];
@@ -128,6 +168,11 @@ export async function POST() {
         warning = e instanceof Error ? e.message : "AI request failed";
         break;
       }
+    }
+
+    if (!warning && processed > 0 && applied.length === 0) {
+      warning =
+        "AI responded but returned no usable category names (a weak free model probably answered). Click again — a stronger model in the chain usually picks up next.";
     }
 
     return NextResponse.json({
