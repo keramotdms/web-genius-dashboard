@@ -145,7 +145,7 @@ const FALLBACK_MODELS = [
 /** Transient failures worth a retry — same model, then the fallback models. */
 const TRANSIENT_STATUSES = new Set([500, 503, 429]);
 /** Cool-down between model switches on transient errors — lets Google shed load. */
-const MODEL_SWITCH_BACKOFF_MS = 3000;
+const MODEL_SWITCH_BACKOFF_MS = 2000;
 
 /**
  * OpenRouter — OpenAI-compatible aggregator (https://openrouter.ai).
@@ -233,7 +233,7 @@ async function postOpenRouter(key: string, system: string, user: string, opts: G
         );
       }
       lastError = `OpenRouter upstream rate-limited (${model})`;
-      await new Promise((r) => setTimeout(r, 2000));
+      await new Promise((r) => setTimeout(r, 1200));
       continue;
     }
     lastError = `OpenRouter HTTP ${res.status} (${model}): ${detail.slice(0, 180)}`;

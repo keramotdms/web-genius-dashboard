@@ -21,8 +21,10 @@ export const maxDuration = 90;
 
 const BATCH_SIZE = 15;
 const MAX_BATCHES_PER_CALL = 4;
-/** Stay under Vercel's 90s function limit — stop early and report the rest as "remaining". */
-const TIME_BUDGET_MS = 75_000;
+/** Stay under Vercel's 90s function limit. Each batch's worst case is ~35s
+ * (full OpenRouter throttle loop + full Gemini fallback chain), so the budget
+ * must leave room for one more batch AFTER the check fires: 45s + 35s = 80s. */
+const TIME_BUDGET_MS = 45_000;
 
 function candidates(refs: RefSite[]): RefSite[] {
   return refs.filter((r) => isGenericBusiness(r.businessCategory) || !isValidWebsiteCategory(r.websiteCategory));
@@ -59,10 +61,10 @@ Return ONLY a compact JSON array (no markdown fences): [{"i": <index>, "website"
     await geminiText(
       "You return only valid compact JSON. No commentary.",
       prompt,
-      // 40s: OpenRouter's free reasoning models spend tokens before the visible
-      // content and can take 20–35s for a 15-site batch (direct Gemini finishes
+      // 32s: OpenRouter's free reasoning models spend tokens before the visible
+      // content and can take 20–30s for a 15-site batch (direct Gemini finishes
       // in ~10–20s, well under this cap)
-      { temperature: 0.1, maxOutputTokens: 4000, timeoutMs: 40_000 },
+      { temperature: 0.1, maxOutputTokens: 4000, timeoutMs: 32_000 },
     )
   )
     .replace(/```json|```/g, "")
