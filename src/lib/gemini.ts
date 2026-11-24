@@ -151,14 +151,20 @@ const MODEL_SWITCH_BACKOFF_MS = 3000;
  * OpenRouter — OpenAI-compatible aggregator (https://openrouter.ai).
  * Used BEFORE the direct Gemini chain when OPENROUTER_API_KEY is set, because
  * its free models keep working after the Gemini free daily cap (429) hits.
- * The free chain was verified live on 2026-11-24: ernie-5.5-flash returns
- * clean compact JSON for the categorize prompt; the gemma/ling backups were
- * temporarily down upstream but may recover — a dead model fails in ~2s and
- * the loop just moves on. Free tier: 50 requests/day on :free models.
+ * All nine :free models below were verified live on 2026-11-24 to return
+ * clean compact JSON for the categorize prompt. :free upstreams throttle
+ * independently ("temporarily rate-limited upstream"), so a wide chain keeps
+ * at least one lane open. Free tier: 50 requests/day across all :free models.
  */
 const OR_BASE = "https://openrouter.ai/api/v1";
 const OR_FREE_MODELS = [
   "baidu/ernie-5.5-flash-preview:free",
+  "nvidia/nemotron-3.5-super-vl:free",
+  "particle-ai/particle-1:free",
+  "dots-studio/dots-3-note-preview:free",
+  "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "liquid/lfm-3-1.7b:free",
+  "recursive/flint-v1.0:free",
   "google/gemma-4-31b-it:free",
   "inclusionai/ling-3.2-flash:free",
 ];
@@ -212,11 +218,20 @@ async function postOpenRouter(key: string, system: string, user: string, opts: G
     }
     const detail = await res.text().catch(() => "");
     if (res.status === 429) {
-      // the 50/day free quota is shared across ALL :free models — stop the chain
-      throw new Error(
-        `OpenRouter free daily limit reached (50 requests on :free models, resets in ~24h). ` +
-          `Top up credits at openrouter.ai/credits or wait for the reset.`,
-      );
+      const msg = detail.toLowerCase();
+      // Two very different 429s:
+      // - "free-models-per-day" — the shared 50/day cap is really done; stop.
+      // - "temporarily rate-limited upstream" — one provider lane is busy;
+      //   wait a beat and try the next free model (independent upstreams).
+      if (msg.includes("per-day") || msg.includes("daily limit") || msg.includes("free-models-per-day")) {
+        throw new Error(
+          `OpenRouter free daily limit reached (50 requests on :free models, resets in ~24h). ` +
+            `Top up credits at openrouter.ai/credits or wait for the reset.`,
+        );
+      }
+      lastError = `OpenRouter upstream rate-limited (${model})`;
+      await new Promise((r) => setTimeout(r, 2000));
+      continue;
     }
     lastError = `OpenRouter HTTP ${res.status} (${model}): ${detail.slice(0, 180)}`;
   }
