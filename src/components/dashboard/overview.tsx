@@ -87,6 +87,49 @@ export default function Overview({ data }: Props) {
     .sort((a, b) => b[1] - a[1])
     .map(([name, value]) => ({ name, value: Math.round(value * 10) / 10 }));
 
+  // ── Projects in Work (CMS platforms) ─────────────────────────────────────
+  // "In work" = any order status NOT in the excluded list below. Add new
+  // statuses to this list as the sheet evolves (matching is case-insensitive).
+  const IN_WORK_EXCLUDED_STATUSES = ["delivered", "cancelled", "c_forward_sales", "nra"];
+  const CMS_PLATFORMS = ["wordpress", "wix", "shopify", "squarespace", "webflow"];
+  const CMS_DISPLAY: Record<string, string> = {
+    wordpress: "WordPress",
+    wix: "Wix",
+    shopify: "Shopify",
+    squarespace: "Squarespace",
+    webflow: "Webflow",
+  };
+  const normText = (s: string) => String(s ?? "").trim().toLowerCase();
+
+  const inWorkOrders = data.orders.filter((o) => {
+    const st = normText(o.status);
+    return st !== "" && !IN_WORK_EXCLUDED_STATUSES.includes(st);
+  });
+  const cmsInWork = inWorkOrders.filter((o) => CMS_PLATFORMS.includes(normText(o.service)));
+
+  // every team that appears anywhere in the sheet keeps a row (0 when idle)
+  const teamDisplay = new Map<string, string>(); // normalized name -> display name
+  for (const o of data.orders) {
+    const raw = String(o.department ?? "").trim();
+    if (raw) teamDisplay.set(normText(raw), raw);
+  }
+  const teamCounts = new Map<string, number>();
+  for (const o of cmsInWork) {
+    const key = normText(o.department) || "(no team)";
+    teamCounts.set(key, (teamCounts.get(key) ?? 0) + 1);
+    if (!teamDisplay.has(key) && key === "(no team)") teamDisplay.set(key, "(no team)");
+  }
+  const teamRows = [...teamDisplay.entries()]
+    .map(([key, display]) => ({ display, count: teamCounts.get(key) ?? 0 }))
+    .sort((a, b) => b.count - a.count || a.display.localeCompare(b.display));
+
+  const platformCounts = [...new Set(cmsInWork.map((o) => normText(o.service)))]
+    .map((p) => ({
+      display: CMS_DISPLAY[p] ?? p,
+      count: cmsInWork.filter((o) => normText(o.service) === p).length,
+    }))
+    .sort((a, b) => b.count - a.count);
+
   const cards = [
     {
       label: "Month Target",
@@ -181,6 +224,57 @@ export default function Overview({ data }: Props) {
           <Coins className="h-3.5 w-3.5" /> {money(data.funnel.queryRevenue + data.funnel.briefRevenue)} from queries &amp; briefs
         </Badge>
       </div>
+
+      {/* Projects in Work — CMS platforms, split by team */}
+      <Card className="border-indigo-200 bg-gradient-to-br from-indigo-50 via-white to-cyan-50">
+        <CardHeader className="pb-3">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <CardTitle className="text-base">Projects in Work (CMS)</CardTitle>
+              <CardDescription>
+                CMS-platform orders currently being worked on — excluding Delivered, Cancelled &amp; C_Forward_Sales
+              </CardDescription>
+            </div>
+            <div className="flex items-baseline gap-1.5 rounded-xl bg-gradient-to-br from-indigo-500 to-cyan-600 px-4 py-2 text-white shadow-sm">
+              <span className="text-2xl font-bold">{cmsInWork.length}</span>
+              <span className="text-xs text-white/80">/ {inWorkOrders.length} active</span>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {/* team split */}
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {teamRows.map((t) => (
+              <div
+                key={t.display}
+                className="rounded-xl border border-indigo-100 bg-white/80 p-3 text-center shadow-sm"
+              >
+                <p className="truncate text-xs font-semibold uppercase tracking-wide text-slate-500">{t.display}</p>
+                <p className={`mt-0.5 text-2xl font-bold ${t.count ? "text-indigo-700" : "text-slate-300"}`}>
+                  {t.count}
+                </p>
+                <p className="text-[10px] text-slate-400">
+                  {t.count === 1 ? "project in work" : "projects in work"}
+                </p>
+              </div>
+            ))}
+            {!teamRows.length && (
+              <p className="text-sm text-slate-400">No teams found in the sheet yet</p>
+            )}
+          </div>
+          {/* platform breakdown chips */}
+          {platformCounts.length > 0 && (
+            <div className="flex flex-wrap items-center gap-2 pt-1">
+              <span className="text-[11px] font-medium uppercase tracking-wide text-slate-400">By platform:</span>
+              {platformCounts.map((p) => (
+                <Badge key={p.display} className="border-0 bg-indigo-100 text-indigo-800 hover:bg-indigo-100">
+                  {p.display} · {p.count}
+                </Badge>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* conversion funnel mini-strip */}
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
