@@ -1,14 +1,17 @@
+/* Data colours — one muted categorical palette, teal leads.
+   No violet/purple/pink: the page design never wears them (taste rule),
+   and data stays in the same quiet family. */
 export const CHART_COLORS = [
-  "#8b5cf6", // violet
-  "#10b981", // emerald
-  "#f59e0b", // amber
-  "#f43f5e", // rose
-  "#14b8a6", // teal
-  "#f97316", // orange
-  "#ec4899", // pink
-  "#84cc16", // lime
-  "#a855f7", // purple
-  "#06b6d4", // cyan
+  "#0f766e", // teal-700 — lead
+  "#d97706", // amber-600
+  "#64748b", // slate-500
+  "#0891b2", // cyan-600
+  "#059669", // emerald-600
+  "#b45309", // amber-700
+  "#475569", // slate-600
+  "#0d9488", // teal-600
+  "#ea580c", // orange-600
+  "#155e75", // cyan-800
 ];
 
 export function money(n: number, digits = 0): string {
@@ -44,54 +47,56 @@ export function timeAgo(iso: string): string {
   return `${Math.floor(hours / 24)}d ago`;
 }
 
+/* Platform badges — distinct but muted tones (bg-50 / text-800 / border-200),
+   flat tints, no gradients. */
 const PLATFORM_STYLES: Record<string, string> = {
-  Shopify: "bg-lime-100 text-lime-800 border-lime-200",
-  WordPress: "bg-cyan-100 text-cyan-800 border-cyan-200",
-  Wix: "bg-fuchsia-100 text-fuchsia-800 border-fuchsia-200",
-  Squarespace: "bg-amber-100 text-amber-800 border-amber-200",
-  Webflow: "bg-rose-100 text-rose-800 border-rose-200",
-  Other: "bg-slate-100 text-slate-700 border-slate-200",
+  Shopify: "bg-emerald-50 text-emerald-800 border-emerald-200",
+  WordPress: "bg-cyan-50 text-cyan-800 border-cyan-200",
+  Wix: "bg-orange-50 text-orange-800 border-orange-200",
+  Squarespace: "bg-amber-50 text-amber-900 border-amber-200",
+  Webflow: "bg-stone-100 text-stone-700 border-stone-200",
+  Other: "bg-stone-100 text-stone-700 border-stone-200",
 };
 
 export function platformClass(p: string): string {
   return PLATFORM_STYLES[p] ?? PLATFORM_STYLES.Other;
 }
 
-/** Badge colors for the 20 website categories. */
+/** Badge colors for the 20 website categories — one muted rotating palette. */
 export function websiteCategoryClass(t: string): string {
   const map: Record<string, string> = {
-    "E-commerce Based (Product Selling) Website": "bg-lime-100 text-lime-800 border-lime-200",
-    "Dropshipping / Affiliate Marketing Website": "bg-emerald-100 text-emerald-800 border-emerald-200",
-    "Professional Service-Based Website": "bg-cyan-100 text-cyan-800 border-cyan-200",
-    "Agency (Agency Business-Based) Website": "bg-purple-100 text-purple-800 border-purple-200",
-    "Corporate / Company Profile Website": "bg-slate-100 text-slate-700 border-slate-200",
-    "Portfolio (Personal / Creative) Website": "bg-orange-100 text-orange-800 border-orange-200",
-    "News Portal Website": "bg-rose-100 text-rose-800 border-rose-200",
-    "Blog / Magazine Website": "bg-pink-100 text-pink-800 border-pink-200",
-    "LMS (Learning Management System) Website": "bg-indigo-100 text-indigo-800 border-indigo-200",
-    "Landing Page Website": "bg-teal-100 text-teal-800 border-teal-200",
-    "Sales Funnel Website": "bg-amber-100 text-amber-800 border-amber-200",
-    "SaaS (Software as a Service) Website": "bg-violet-100 text-violet-800 border-violet-200",
-    "Membership / Subscription Website": "bg-fuchsia-100 text-fuchsia-800 border-fuchsia-200",
-    "Booking / Appointment Website": "bg-green-100 text-green-800 border-green-200",
-    "Real Estate / Property Listing Website": "bg-blue-100 text-blue-800 border-blue-200",
+    "E-commerce Based (Product Selling) Website": "bg-emerald-50 text-emerald-800 border-emerald-200",
+    "Dropshipping / Affiliate Marketing Website": "bg-teal-50 text-teal-800 border-teal-200",
+    "Professional Service-Based Website": "bg-cyan-50 text-cyan-800 border-cyan-200",
+    "Agency (Agency Business-Based) Website": "bg-orange-50 text-orange-800 border-orange-200",
+    "Corporate / Company Profile Website": "bg-stone-100 text-stone-700 border-stone-200",
+    "Portfolio (Personal / Creative) Website": "bg-amber-50 text-amber-900 border-amber-200",
+    "News Portal Website": "bg-rose-50 text-rose-800 border-rose-200",
+    "Blog / Magazine Website": "bg-yellow-50 text-yellow-800 border-yellow-200",
+    "LMS (Learning Management System) Website": "bg-lime-50 text-lime-800 border-lime-200",
+    "Landing Page Website": "bg-teal-50 text-teal-800 border-teal-200",
+    "Sales Funnel Website": "bg-amber-50 text-amber-900 border-amber-200",
+    "SaaS (Software as a Service) Website": "bg-emerald-50 text-emerald-800 border-emerald-200",
+    "Membership / Subscription Website": "bg-orange-50 text-orange-800 border-orange-200",
+    "Booking / Appointment Website": "bg-green-50 text-green-800 border-green-200",
+    "Real Estate / Property Listing Website": "bg-cyan-50 text-cyan-800 border-cyan-200",
     "Directory / Listing Website": "bg-stone-100 text-stone-700 border-stone-200",
-    "Job Portal Website": "bg-yellow-100 text-yellow-800 border-yellow-200",
-    "Event / Conference Website": "bg-red-100 text-red-800 border-red-200",
-    "Forum / Community Website": "bg-sky-100 text-sky-800 border-sky-200",
-    "Non-Profit / NGO / Charity Website": "bg-emerald-100 text-emerald-800 border-emerald-200",
+    "Job Portal Website": "bg-yellow-50 text-yellow-800 border-yellow-200",
+    "Event / Conference Website": "bg-rose-50 text-rose-800 border-rose-200",
+    "Forum / Community Website": "bg-sky-50 text-sky-800 border-sky-200",
+    "Non-Profit / NGO / Charity Website": "bg-lime-50 text-lime-800 border-lime-200",
   };
-  return map[t] ?? "bg-slate-100 text-slate-500 border-slate-200 italic";
+  return map[t] ?? "bg-stone-100 text-stone-500 border-stone-200 italic";
 }
 
-/** Badge colors for the big-client hunting labels. */
+/** Badge colors for the big-client hunting labels — flat tints, no gradients. */
 export function siteLabelClass(label: string): string {
   const map: Record<string, string> = {
-    "Premium Website": "bg-gradient-to-r from-amber-100 to-yellow-100 text-amber-800 border-amber-300",
-    "Large Website": "bg-indigo-100 text-indigo-800 border-indigo-300",
-    "High Value Project's Website": "bg-gradient-to-r from-rose-100 to-pink-100 text-rose-800 border-rose-300",
+    "Premium Website": "bg-amber-50 text-amber-800 border-amber-300",
+    "Large Website": "bg-cyan-50 text-cyan-800 border-cyan-300",
+    "High Value Project's Website": "bg-rose-50 text-rose-800 border-rose-300",
   };
-  return map[label] ?? "bg-slate-100 text-slate-700 border-slate-200";
+  return map[label] ?? "bg-stone-100 text-stone-700 border-stone-200";
 }
 
 export function pct(n: number): string {

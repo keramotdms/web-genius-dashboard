@@ -89,7 +89,7 @@ function statusClass(s: string): string {
   if (t === "delivered") return "bg-emerald-100 text-emerald-800 border-emerald-200";
   if (t === "wip") return "bg-amber-100 text-amber-800 border-amber-200";
   if (t === "cancelled") return "bg-rose-100 text-rose-800 border-rose-200";
-  return "bg-slate-100 text-slate-700 border-slate-200";
+  return "bg-slate-100 text-foreground/80 border-slate-200";
 }
 
 export default function OrdersManager({
@@ -246,13 +246,13 @@ export default function OrdersManager({
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <div>
           <h2 className="text-lg font-semibold">Sales Orders</h2>
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-muted-foreground">
             {data.orders.length} orders this month · add, edit or delete — everything saves to the dashboard database
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <div className="relative w-full sm:w-64">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               type="search"
               value={q}
@@ -276,36 +276,32 @@ export default function OrdersManager({
             <CloudDownload className={`mr-1 h-4 w-4 ${syncing ? "animate-pulse" : ""}`} />
             {syncing ? "Syncing…" : "Sync from Sheet"}
           </Button>
-          <Button
-            size="sm"
-            onClick={openAdd}
-            className="bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white hover:opacity-90"
-          >
+          <Button size="sm" onClick={openAdd}>
             <Plus className="mr-1 h-4 w-4" /> Add Order
           </Button>
         </div>
       </div>
 
-      {/* mini stats */}
+      {/* mini stats — same card language as the overview KPI row */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {[
-          { label: "Orders", value: String(filtered.length), cls: "text-violet-700" },
+          { label: "Orders", value: String(filtered.length), cls: "text-foreground" },
           { label: "Revenue", value: money(Math.round(revenue * 10) / 10), cls: "text-emerald-700" },
           { label: "Delivered", value: String(delivered), cls: "text-teal-700" },
           { label: "WIP", value: String(wip), cls: "text-amber-700" },
         ].map((s) => (
-          <div key={s.label} className="rounded-2xl border bg-white/80 p-4 shadow-sm backdrop-blur">
-            <p className="text-xs text-slate-400">{s.label}</p>
+          <div key={s.label} className="rounded-xl border bg-card p-4">
+            <p className="text-xs text-muted-foreground">{s.label}</p>
             <p className={`mt-1 text-xl font-bold tabular-nums ${s.cls}`}>{s.value}</p>
           </div>
         ))}
       </div>
 
       {/* desktop table */}
-      <div className="hidden overflow-hidden rounded-2xl border bg-white/85 shadow-sm backdrop-blur md:block">
+      <div className="hidden overflow-hidden rounded-xl border bg-card md:block">
         <div className="max-h-[560px] overflow-auto">
           <table className="w-full text-sm">
-            <thead className="sticky top-0 z-10 bg-slate-50/95 text-left text-xs text-slate-500 backdrop-blur">
+            <thead className="sticky top-0 z-10 bg-muted/95 text-left text-xs text-muted-foreground backdrop-blur">
               <tr>
                 <th className="px-3 py-2.5 font-medium">Date</th>
                 <th className="px-3 py-2.5 font-medium">Order / Client</th>
@@ -318,22 +314,23 @@ export default function OrdersManager({
               </tr>
             </thead>
             <tbody>
-              {shown.map((o) => (
-                <tr key={o.id} className="border-t border-slate-100 hover:bg-violet-50/40">
-                  <td className="whitespace-nowrap px-3 py-2.5 tabular-nums text-slate-600">{shortDate(o.date)}</td>
+              {shown.map((o, i) => (
+                /* sheet rows can repeat an id — index suffix keeps React keys unique */
+                <tr key={`${o.id}-${i}`} className="border-t border-border transition-colors hover:bg-accent/50">
+                  <td className="whitespace-nowrap px-3 py-2.5 tabular-nums text-muted-foreground">{shortDate(o.date)}</td>
                   <td className="px-3 py-2.5">
-                    <p className="font-medium text-slate-800">{o.orderNo || "—"}</p>
-                    <p className="text-xs text-slate-400">{o.clientId || o.profile || ""}</p>
+                    <p className="font-medium text-foreground">{o.orderNo || "—"}</p>
+                    <p className="text-xs text-muted-foreground">{o.clientId || o.profile || ""}</p>
                   </td>
-                  <td className="px-3 py-2.5 text-slate-700">{o.employee}</td>
-                  <td className="px-3 py-2.5 text-slate-600">{o.service}</td>
-                  <td className="px-3 py-2.5 text-xs text-slate-500">{o.source || "—"}</td>
+                  <td className="px-3 py-2.5 text-foreground/80">{o.employee}</td>
+                  <td className="px-3 py-2.5 text-muted-foreground">{o.service}</td>
+                  <td className="px-3 py-2.5 text-xs text-muted-foreground">{o.source || "—"}</td>
                   <td className="px-3 py-2.5">
                     <Badge variant="outline" className={`${statusClass(o.status)} text-[11px]`}>
                       {o.status}
                     </Badge>
                   </td>
-                  <td className="whitespace-nowrap px-3 py-2.5 text-right font-semibold tabular-nums text-slate-800">
+                  <td className="whitespace-nowrap px-3 py-2.5 text-right font-semibold tabular-nums text-foreground">
                     {money(o.amount, 2)}
                   </td>
                   <td className="whitespace-nowrap px-3 py-2.5 text-right">
@@ -367,26 +364,26 @@ export default function OrdersManager({
 
       {/* mobile cards */}
       <div className="space-y-3 md:hidden">
-        {shown.map((o) => (
-          <div key={o.id} className="rounded-2xl border bg-white/85 p-4 shadow-sm backdrop-blur">
+        {shown.map((o, i) => (
+          <div key={`${o.id}-m-${i}`} className="rounded-xl border bg-card p-4">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="font-semibold text-slate-800">{o.employee}</p>
-                <p className="text-xs text-slate-400">
+                <p className="font-semibold text-foreground">{o.employee}</p>
+                <p className="text-xs text-muted-foreground">
                   {shortDate(o.date)} · {o.orderNo || "no order no"}
                 </p>
               </div>
-              <p className="font-bold tabular-nums text-slate-800">{money(o.amount, 2)}</p>
+              <p className="font-bold tabular-nums text-foreground">{money(o.amount, 2)}</p>
             </div>
             <div className="mt-2 flex flex-wrap items-center gap-1.5">
               <Badge variant="outline" className={`${statusClass(o.status)} text-[11px]`}>
                 {o.status}
               </Badge>
-              <Badge variant="outline" className="bg-slate-50 text-[11px] text-slate-600">
+              <Badge variant="outline" className="border-border bg-muted text-[11px] text-muted-foreground">
                 {o.service}
               </Badge>
               {o.source && (
-                <Badge variant="outline" className="bg-slate-50 text-[11px] text-slate-600">
+                <Badge variant="outline" className="border-border bg-muted text-[11px] text-muted-foreground">
                   {o.source}
                 </Badge>
               )}
@@ -417,9 +414,9 @@ export default function OrdersManager({
       )}
 
       {filtered.length === 0 && (
-        <div className="flex flex-col items-center gap-2 rounded-2xl border bg-white/85 py-12 text-center shadow-sm">
-          <ShoppingCart className="h-10 w-10 text-slate-300" />
-          <p className="text-sm text-slate-500">
+        <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed bg-card py-12 text-center">
+          <ShoppingCart className="h-10 w-10 text-stone-300" aria-hidden="true" />
+          <p className="text-sm text-muted-foreground">
             {data.orders.length ? "No order matches your search." : "No orders yet — add your first order or sync from the sheet."}
           </p>
         </div>
@@ -492,11 +489,11 @@ function OrderFormDialog(props: {
   }, [dirty]);
 
   const field =
-    "w-full rounded-xl border bg-white px-3 py-2 text-sm shadow-sm focus-visible:border-violet-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-300";
+    "w-full rounded-lg border border-input bg-card px-3 py-2 text-sm transition-colors focus-visible:border-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40";
 
   return (
     <Dialog open>
-      <DialogContent className="max-h-[90vh] max-w-lg overflow-y-auto rounded-2xl sm:max-w-xl">
+      <DialogContent className="max-h-[90vh] max-w-lg overflow-y-auto rounded-xl sm:max-w-xl">
         <DialogHeader>
           <DialogTitle>{props.editingId ? "Edit order" : "Add new order"}</DialogTitle>
           <DialogDescription>
@@ -508,18 +505,18 @@ function OrderFormDialog(props: {
 
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1">
-            <label htmlFor="og-date" className="text-xs font-medium text-slate-500">Date *</label>
+            <label htmlFor="og-date" className="text-xs font-medium text-muted-foreground">Date *</label>
             <Input
               id="og-date"
               name="date"
               type="date"
               value={form.date}
               onChange={(e) => set("date", e.target.value)}
-              className="rounded-xl"
+              className="rounded-lg"
             />
           </div>
           <div className="space-y-1">
-            <label htmlFor="og-amount" className="text-xs font-medium text-slate-500">Amount ($) *</label>
+            <label htmlFor="og-amount" className="text-xs font-medium text-muted-foreground">Amount ($) *</label>
             <Input
               id="og-amount"
               name="amount"
@@ -531,11 +528,11 @@ function OrderFormDialog(props: {
               value={form.amount}
               onChange={(e) => set("amount", e.target.value.replace(/[^\d.]/g, ""))}
               placeholder="e.g. 120"
-              className="rounded-xl"
+              className="rounded-lg"
             />
           </div>
           <div className="col-span-2 space-y-1">
-            <label htmlFor="og-employee" className="text-xs font-medium text-slate-500">Employee *</label>
+            <label htmlFor="og-employee" className="text-xs font-medium text-muted-foreground">Employee *</label>
             <Input
               id="og-employee"
               name="employee"
@@ -544,7 +541,7 @@ function OrderFormDialog(props: {
               value={form.employee}
               onChange={(e) => set("employee", e.target.value)}
               placeholder="Team member name…"
-              className="rounded-xl"
+              className="rounded-lg"
             />
             <datalist id="og-employees">
               {props.employees.map((n) => (
@@ -553,7 +550,7 @@ function OrderFormDialog(props: {
             </datalist>
           </div>
           <div className="space-y-1">
-            <label htmlFor="og-service" className="text-xs font-medium text-slate-500">Service</label>
+            <label htmlFor="og-service" className="text-xs font-medium text-muted-foreground">Service</label>
             <Input
               id="og-service"
               name="service"
@@ -562,7 +559,7 @@ function OrderFormDialog(props: {
               value={form.service}
               onChange={(e) => set("service", e.target.value)}
               placeholder="Shopify, Wix…"
-              className="rounded-xl"
+              className="rounded-lg"
             />
             <datalist id="og-services">
               {props.services.map((n) => (
@@ -571,7 +568,7 @@ function OrderFormDialog(props: {
             </datalist>
           </div>
           <div className="space-y-1">
-            <label htmlFor="og-source" className="text-xs font-medium text-slate-500">Source</label>
+            <label htmlFor="og-source" className="text-xs font-medium text-muted-foreground">Source</label>
             <Input
               id="og-source"
               name="source"
@@ -580,7 +577,7 @@ function OrderFormDialog(props: {
               value={form.source}
               onChange={(e) => set("source", e.target.value)}
               placeholder="Where the sale came from…"
-              className="rounded-xl"
+              className="rounded-lg"
             />
             <datalist id="og-sources">
               {props.sources.map((n) => (
@@ -589,9 +586,9 @@ function OrderFormDialog(props: {
             </datalist>
           </div>
           <div className="space-y-1">
-            <label htmlFor="og-status" className="text-xs font-medium text-slate-500">Status</label>
+            <label htmlFor="og-status" className="text-xs font-medium text-muted-foreground">Status</label>
             <Select value={form.status || "WIP"} onValueChange={(v) => set("status", v)}>
-              <SelectTrigger id="og-status" className="rounded-xl">
+              <SelectTrigger id="og-status" className="rounded-lg">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -604,9 +601,9 @@ function OrderFormDialog(props: {
             </Select>
           </div>
           <div className="space-y-1">
-            <label htmlFor="og-fresh" className="text-xs font-medium text-slate-500">Fresh / Repeat</label>
+            <label htmlFor="og-fresh" className="text-xs font-medium text-muted-foreground">Fresh / Repeat</label>
             <Select value={form.fresh || "none"} onValueChange={(v) => set("fresh", v === "none" ? "" : v)}>
-              <SelectTrigger id="og-fresh" className="rounded-xl">
+              <SelectTrigger id="og-fresh" className="rounded-lg">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -617,7 +614,7 @@ function OrderFormDialog(props: {
             </Select>
           </div>
           <div className="space-y-1">
-            <label htmlFor="og-order-no" className="text-xs font-medium text-slate-500">Order no</label>
+            <label htmlFor="og-order-no" className="text-xs font-medium text-muted-foreground">Order no</label>
             <Input
               id="og-order-no"
               name="orderNo"
@@ -625,11 +622,11 @@ function OrderFormDialog(props: {
               spellCheck={false}
               value={form.orderNo}
               onChange={(e) => set("orderNo", e.target.value)}
-              className="rounded-xl"
+              className="rounded-lg"
             />
           </div>
           <div className="space-y-1">
-            <label htmlFor="og-client-id" className="text-xs font-medium text-slate-500">Client ID</label>
+            <label htmlFor="og-client-id" className="text-xs font-medium text-muted-foreground">Client ID</label>
             <Input
               id="og-client-id"
               name="clientId"
@@ -637,11 +634,11 @@ function OrderFormDialog(props: {
               spellCheck={false}
               value={form.clientId}
               onChange={(e) => set("clientId", e.target.value)}
-              className="rounded-xl"
+              className="rounded-lg"
             />
           </div>
           <div className="space-y-1">
-            <label htmlFor="og-profile" className="text-xs font-medium text-slate-500">Profile</label>
+            <label htmlFor="og-profile" className="text-xs font-medium text-muted-foreground">Profile</label>
             <Input
               id="og-profile"
               name="profile"
@@ -649,11 +646,11 @@ function OrderFormDialog(props: {
               spellCheck={false}
               value={form.profile}
               onChange={(e) => set("profile", e.target.value)}
-              className="rounded-xl"
+              className="rounded-lg"
             />
           </div>
           <div className="space-y-1">
-            <label htmlFor="og-department" className="text-xs font-medium text-slate-500">Department</label>
+            <label htmlFor="og-department" className="text-xs font-medium text-muted-foreground">Department</label>
             <Input
               id="og-department"
               name="department"
@@ -662,7 +659,7 @@ function OrderFormDialog(props: {
               value={form.department}
               onChange={(e) => set("department", e.target.value)}
               placeholder="SAA_Team / STA_Team…"
-              className="rounded-xl"
+              className="rounded-lg"
             />
             <datalist id="og-departments">
               <option value="SAA_Team" />
@@ -672,18 +669,14 @@ function OrderFormDialog(props: {
         </div>
 
         {props.error && (
-          <p role="alert" className="rounded-xl bg-rose-50 px-3 py-2 text-sm text-rose-600">{props.error}</p>
+          <p role="alert" className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-600">{props.error}</p>
         )}
 
         <DialogFooter className="gap-2">
           <Button variant="outline" onClick={props.onCancel} disabled={props.saving}>
             Cancel
           </Button>
-          <Button
-            onClick={() => props.onSave(form, props.onCancel)}
-            disabled={props.saving}
-            className="bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white hover:opacity-90"
-          >
+          <Button onClick={() => props.onSave(form, props.onCancel)} disabled={props.saving}>
             {props.saving ? "Saving…" : props.editingId ? "Save changes" : "Add order"}
           </Button>
         </DialogFooter>

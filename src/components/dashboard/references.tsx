@@ -126,10 +126,10 @@ function Pill({
       onClick={onClick}
       title={title}
       aria-pressed={active}
-      className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-1 ${
+      className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 ${
         active
-          ? "border-teal-600 bg-teal-600 text-white shadow-sm"
-          : "border-slate-200 bg-white text-slate-600 hover:border-teal-400 hover:text-teal-700"
+          ? "border-primary bg-primary text-primary-foreground"
+          : "border-border bg-card text-muted-foreground hover:border-teal-500 hover:text-teal-700"
       }`}
     >
       {children}
@@ -186,14 +186,14 @@ function BusinessPicker({
         autoComplete="off"
       />
       {open && matches.length > 0 && (
-        <div id="business-suggestions" role="listbox" className="absolute z-50 mt-1 max-h-56 w-full overflow-auto rounded-md border bg-white shadow-lg">
+        <div id="business-suggestions" role="listbox" className="absolute z-50 mt-1 max-h-56 w-full overflow-auto rounded-md border bg-card shadow-lg">
           {matches.map((b) => (
             <button
               key={b}
               type="button"
               role="option"
               aria-selected={text === b}
-              className="block w-full px-3 py-1.5 text-left text-sm text-slate-700 hover:bg-teal-50 hover:text-teal-800 focus-visible:bg-teal-50 focus-visible:text-teal-800 focus-visible:outline-none"
+              className="block w-full px-3 py-1.5 text-left text-sm text-foreground/80 hover:bg-teal-50 hover:text-teal-800 focus-visible:bg-teal-50 focus-visible:text-teal-800 focus-visible:outline-none"
               onMouseDown={(e) => {
                 e.preventDefault();
                 setText(b);
@@ -212,7 +212,7 @@ function BusinessPicker({
           ))}
         </div>
       )}
-      <p className="mt-1 text-[11px] text-slate-400">
+      <p className="mt-1 text-[11px] text-muted-foreground">
         Pick a suggestion or type your own business name — anything like “consultant”, “X News Paper” works.
       </p>
     </div>
@@ -237,10 +237,10 @@ function LabelChips({
             type="button"
             onClick={() => onToggle(label)}
             aria-pressed={active}
-            className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 ${
+            className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 ${
               active
-                ? "border-amber-500 bg-amber-500 text-white shadow-sm"
-                : "border-slate-200 bg-white text-slate-600 hover:border-amber-400 hover:text-amber-700"
+                ? "border-amber-600 bg-amber-600 text-white"
+                : "border-border bg-card text-muted-foreground hover:border-amber-500 hover:text-amber-700"
             }`}
           >
             <Tag className="mr-1 inline h-3 w-3" aria-hidden="true" />
@@ -673,14 +673,16 @@ export default function References({ data, reload }: { data: DashboardData; relo
 
   return (
     <div className="space-y-6">
-      {/* AI finder */}
-      <Card className="overflow-hidden border-teal-200">
-        <div className="bg-gradient-to-r from-teal-600 via-emerald-500 to-lime-400 px-6 py-4 text-white">
-          <div className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5" />
+      {/* AI finder — dark ink band, the product's AI language */}
+      <Card className="overflow-hidden rounded-xl">
+        <div className="bg-stone-900 px-6 py-4 text-stone-50">
+          <div className="flex items-center gap-2.5">
+            <span aria-hidden="true" className="flex h-8 w-8 items-center justify-center rounded-lg bg-teal-400/15 text-teal-300">
+              <Sparkles className="h-4 w-4" />
+            </span>
             <div>
               <h2 className="font-semibold">AI Reference Finder</h2>
-              <p className="text-xs text-white/85">
+              <p className="text-xs text-stone-400">
                 Describe what your client needs — AI picks the best examples from your library and the web
               </p>
             </div>
@@ -695,15 +697,11 @@ export default function References({ data, reload }: { data: DashboardData; relo
             rows={3}
           />
           <div className="flex items-center gap-3">
-            <Button
-              onClick={findWebsites}
-              disabled={finding}
-              className="bg-gradient-to-r from-teal-600 to-emerald-600 text-white hover:opacity-90"
-            >
+            <Button onClick={findWebsites} disabled={finding}>
               <Sparkles className={`mr-1.5 h-4 w-4 ${finding ? "animate-pulse" : ""}`} />
               {finding ? "Searching…" : "Find reference websites"}
             </Button>
-            {finding && <span className="text-xs text-slate-500">Matching your library + searching the web…</span>}
+            {finding && <span className="text-xs text-muted-foreground">Matching your library + searching the web…</span>}
           </div>
 
           {finding && (
@@ -728,7 +726,7 @@ export default function References({ data, reload }: { data: DashboardData; relo
                         href={m.url}
                         target="_blank"
                         rel="noreferrer"
-                        className="group rounded-xl border bg-white p-3 transition-shadow hover:shadow-md"
+                        className="group rounded-xl border bg-card p-3 transition-shadow hover:shadow-sm"
                       >
                         <div className="flex items-start justify-between gap-2">
                           <div className="min-w-0">
@@ -742,25 +740,25 @@ export default function References({ data, reload }: { data: DashboardData; relo
                                 </Badge>
                               )}
                             </div>
-                            <p className="truncate text-sm font-medium text-slate-800 group-hover:text-teal-700">
+                            <p className="truncate text-sm font-medium text-foreground group-hover:text-teal-700">
                               {m.businessCategory || m.category}
                             </p>
-                            <p className="truncate text-xs text-slate-400">{hostOf(m.url)}</p>
-                            {m.reason && <p className="mt-1.5 text-xs italic text-slate-600">{m.reason}</p>}
+                            <p className="truncate text-xs text-muted-foreground">{hostOf(m.url)}</p>
+                            {m.reason && <p className="mt-1.5 text-xs italic text-muted-foreground">{m.reason}</p>}
                           </div>
-                          <ExternalLink className="h-4 w-4 shrink-0 text-slate-300 group-hover:text-teal-600" />
+                          <ExternalLink className="h-4 w-4 shrink-0 text-stone-300 group-hover:text-teal-600" />
                         </div>
                       </a>
                     ))}
                   </div>
                 ) : (
-                  <p className="text-sm text-slate-500">No close match in your library — check the web suggestions below.</p>
+                  <p className="text-sm text-muted-foreground">No close match in your library — check the web suggestions below.</p>
                 )}
               </div>
 
               {web.length > 0 && (
                 <div>
-                  <p className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-emerald-800">
+                  <p className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-primary">
                     <Globe className="h-4 w-4" /> Fresh picks from the web
                   </p>
                   <div className="space-y-2">
@@ -770,14 +768,14 @@ export default function References({ data, reload }: { data: DashboardData; relo
                         href={w.url}
                         target="_blank"
                         rel="noreferrer"
-                        className="group flex items-start gap-2 rounded-xl border bg-white p-3 transition-shadow hover:shadow-md"
+                        className="group flex items-start gap-2 rounded-xl border bg-card p-3 transition-shadow hover:shadow-sm"
                       >
-                        <ExternalLink className="mt-0.5 h-4 w-4 shrink-0 text-slate-300 group-hover:text-emerald-600" />
+                        <ExternalLink className="mt-0.5 h-4 w-4 shrink-0 text-stone-300 group-hover:text-teal-700" />
                         <div className="min-w-0">
-                          <p className="truncate text-sm font-medium text-slate-800 group-hover:text-emerald-700">
+                          <p className="truncate text-sm font-medium text-foreground group-hover:text-teal-800">
                             {w.name || hostOf(w.url)}
                           </p>
-                          {w.snippet && <p className="line-clamp-2 text-xs text-slate-500">{w.snippet}</p>}
+                          {w.snippet && <p className="line-clamp-2 text-xs text-muted-foreground">{w.snippet}</p>}
                           <p className="truncate text-xs text-emerald-600">{hostOf(w.url)}</p>
                         </div>
                       </a>
@@ -805,7 +803,7 @@ export default function References({ data, reload }: { data: DashboardData; relo
             </div>
             <div className="flex shrink-0 flex-wrap items-center gap-2">
               {hasFilters && (
-                <Button size="sm" variant="ghost" onClick={clearAll} className="text-slate-500 hover:text-teal-700">
+                <Button size="sm" variant="ghost" onClick={clearAll} className="text-muted-foreground hover:text-teal-700">
                   <X className="mr-1 h-4 w-4" /> Clear filters
                 </Button>
               )}
@@ -814,12 +812,12 @@ export default function References({ data, reload }: { data: DashboardData; relo
                 onClick={runAiCategorize}
                 disabled={aiBusy}
                 variant="outline"
-                className="border-purple-200 text-purple-700 hover:bg-purple-50 hover:text-purple-800"
+                className="border-border bg-accent text-accent-foreground hover:bg-accent/80 hover:text-accent-foreground"
               >
                 <Wand2 className={`mr-1 h-4 w-4 ${aiBusy ? "animate-pulse" : ""}`} />
                 {aiBusy ? "AI working…" : "AI categorize"}
                 {aiRemaining > 0 && !aiBusy && (
-                  <span className="ml-1 rounded-full bg-purple-100 px-1.5 text-[10px] font-semibold text-purple-700">
+                  <span className="ml-1 rounded-full bg-primary/10 px-1.5 text-[10px] font-semibold text-primary">
                     {aiRemaining}
                   </span>
                 )}
@@ -835,7 +833,6 @@ export default function References({ data, reload }: { data: DashboardData; relo
               <Button
                 size="sm"
                 onClick={openAddDialog}
-                className="bg-gradient-to-r from-teal-600 to-emerald-600 text-white hover:opacity-90"
               >
                 <Plus className="mr-1 h-4 w-4" /> Add website
               </Button>
@@ -844,7 +841,7 @@ export default function References({ data, reload }: { data: DashboardData; relo
 
             {/* Level 1 — CMS Category */}
           <div className="space-y-2 pt-2">
-            <p className="text-[11px] font-semibold text-slate-400">
+            <p className="text-[11px] font-semibold text-muted-foreground">
               1. CMS category (platform)
             </p>
             <div className="flex flex-wrap gap-2">
@@ -858,7 +855,7 @@ export default function References({ data, reload }: { data: DashboardData; relo
 
           {/* Level 2 — Website Category */}
           <div className="space-y-2 pt-1">
-            <p className="text-[11px] font-semibold text-slate-400">
+            <p className="text-[11px] font-semibold text-muted-foreground">
               2. Website category
             </p>
             <div className="flex flex-wrap gap-2">
@@ -878,11 +875,11 @@ export default function References({ data, reload }: { data: DashboardData; relo
           {/* Level 3 — Business Name Category */}
           <div className="flex flex-wrap items-end gap-3 pt-1">
             <div className="min-w-[260px] space-y-1.5">
-              <p className="text-[11px] font-semibold text-slate-400">
+              <p className="text-[11px] font-semibold text-muted-foreground">
                 3. Business name category
               </p>
               <Select value={businessCat} onValueChange={pickBusiness}>
-                <SelectTrigger className="h-9 w-full bg-white">
+                <SelectTrigger className="h-9 w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="max-h-72">
@@ -895,7 +892,7 @@ export default function References({ data, reload }: { data: DashboardData; relo
               </Select>
             </div>
             <div className="relative max-w-xs flex-1 pt-[18px]">
-              <Search className="absolute left-2.5 top-[30px] h-4 w-4 text-slate-400" aria-hidden="true" />
+              <Search className="absolute left-2.5 top-[30px] h-4 w-4 text-muted-foreground" aria-hidden="true" />
               <Input
                 type="search"
                 value={q}
@@ -913,7 +910,7 @@ export default function References({ data, reload }: { data: DashboardData; relo
 
           {/* Level 4 — Big-client labels */}
           <div className="space-y-2 pt-1">
-            <p className="text-[11px] font-semibold text-slate-400">
+            <p className="text-[11px] font-semibold text-muted-foreground">
               4. Labels (big-client hunting)
             </p>
             <div className="flex flex-wrap gap-2">
@@ -926,7 +923,7 @@ export default function References({ data, reload }: { data: DashboardData; relo
           </div>
         </CardHeader>
         <CardContent>
-          <p className="mb-2 text-xs text-slate-500">
+          <p className="mb-2 text-xs text-muted-foreground">
             Showing <span className="font-semibold tabular-nums text-teal-700">{Math.min(shownCount, filtered.length)}</span> of{" "}
             <span className="tabular-nums">{filtered.length}</span> websites
             {platform !== "All" ? ` in ${platform}` : ""}
@@ -941,7 +938,7 @@ export default function References({ data, reload }: { data: DashboardData; relo
                 {filtered.slice(0, shownCount).map((r) => (
                   <div
                     key={r.url}
-                    className="group relative flex items-start justify-between gap-2 rounded-lg border bg-white p-2.5 transition-colors hover:border-teal-400 hover:bg-teal-50/40"
+                    className="group relative flex items-start justify-between gap-2 rounded-lg border bg-card p-2.5 transition-colors hover:border-teal-400 hover:bg-teal-50/40"
                   >
                     <a
                       href={r.url}
@@ -949,7 +946,7 @@ export default function References({ data, reload }: { data: DashboardData; relo
                       rel="noreferrer"
                       className="min-w-0 flex-1"
                     >
-                      <p className="truncate text-sm font-medium text-slate-700">
+                      <p className="truncate text-sm font-medium text-foreground/80">
                         {r.businessCategory}
                         {r.custom && (
                           <span className="ml-1.5 rounded-full border border-rose-200 bg-rose-50 px-1.5 py-0.5 align-middle text-[9px] font-semibold text-rose-600">
@@ -957,7 +954,7 @@ export default function References({ data, reload }: { data: DashboardData; relo
                           </span>
                         )}
                       </p>
-                      <p className="truncate text-xs text-slate-400 group-hover:text-teal-700">{hostOf(r.url)}</p>
+                      <p className="truncate text-xs text-muted-foreground group-hover:text-teal-700">{hostOf(r.url)}</p>
                       {(r.labels ?? []).length > 0 && (
                         <div className="mt-1 flex flex-wrap gap-1">
                           {(r.labels ?? []).map((l) => (
@@ -987,7 +984,7 @@ export default function References({ data, reload }: { data: DashboardData; relo
                           onClick={() => openEditDialog(r)}
                           aria-label={`Change category and labels of ${hostOf(r.url)}`}
                           title="Change category & labels"
-                          className="rounded-full border border-slate-200 bg-white p-1.5 text-slate-400 transition-colors hover:border-teal-400 hover:text-teal-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500"
+                          className="rounded-full border bg-card p-1.5 text-muted-foreground transition-colors hover:border-teal-400 hover:text-teal-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500"
                         >
                           <Pencil className="h-3 w-3" aria-hidden="true" />
                         </button>
@@ -997,13 +994,13 @@ export default function References({ data, reload }: { data: DashboardData; relo
                             onClick={() => setDeletingSite(r)}
                             aria-label={`Remove ${hostOf(r.url)} from the library`}
                             title="Remove this website"
-                            className="rounded-full border border-rose-200 bg-white p-1.5 text-rose-400 transition-colors hover:border-rose-400 hover:text-rose-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400"
+                            className="rounded-full border border-rose-200 bg-card p-1.5 text-rose-400 transition-colors hover:border-rose-400 hover:text-rose-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400"
                           >
                             <Trash2 className="h-3 w-3" aria-hidden="true" />
                           </button>
                         )}
                         <span aria-hidden="true">
-                          <ExternalLink className="h-3.5 w-3.5 text-slate-300 group-hover:text-teal-600" />
+                          <ExternalLink className="h-3.5 w-3.5 text-stone-300 group-hover:text-teal-600" />
                         </span>
                       </div>
                     </div>
@@ -1020,7 +1017,7 @@ export default function References({ data, reload }: { data: DashboardData; relo
             )}
             </>
           ) : (
-            <p className="py-8 text-center text-sm text-slate-400">No references match your filter.</p>
+            <p className="py-8 text-center text-sm text-muted-foreground">No references match your filter.</p>
           )}
         </CardContent>
       </Card>
@@ -1084,7 +1081,6 @@ export default function References({ data, reload }: { data: DashboardData; relo
             <Button
               onClick={saveWebsite}
               disabled={saving || !newUrl.trim()}
-              className="bg-gradient-to-r from-teal-600 to-emerald-600 text-white hover:opacity-90"
             >
               {saving ? "Saving…" : "Save to library"}
             </Button>
@@ -1113,7 +1109,7 @@ export default function References({ data, reload }: { data: DashboardData; relo
               <Label>Labels</Label>
               <LabelChips selected={editLabels} onToggle={(l) => toggleLabel(editLabels, setEditLabels, l)} />
             </div>
-            <p className="text-[11px] text-slate-400">
+            <p className="text-[11px] text-muted-foreground">
               Your fix is saved permanently — even for sheet-synced websites it survives the next sync.
             </p>
           </div>
@@ -1124,7 +1120,6 @@ export default function References({ data, reload }: { data: DashboardData; relo
             <Button
               onClick={saveEdit}
               disabled={savingEdit}
-              className="bg-gradient-to-r from-teal-600 to-emerald-600 text-white hover:opacity-90"
             >
               {savingEdit ? "Saving…" : "Save changes"}
             </Button>
@@ -1161,14 +1156,14 @@ export default function References({ data, reload }: { data: DashboardData; relo
               {importFile ? (
                 <>
                   <p className="text-sm font-medium text-teal-800">{importFile.name}</p>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-muted-foreground">
                     {(importFile.size / 1024).toFixed(1)} KB — click to choose another file
                   </p>
                 </>
               ) : (
                 <>
-                  <p className="text-sm font-medium text-slate-700">Choose a CSV file or drop it here</p>
-                  <p className="text-xs text-slate-400">.csv / .tsv / .txt — max 2 MB, up to 3000 rows</p>
+                  <p className="text-sm font-medium text-foreground/80">Choose a CSV file or drop it here</p>
+                  <p className="text-xs text-muted-foreground">.csv / .tsv / .txt — max 2 MB, up to 3000 rows</p>
                 </>
               )}
               <input
@@ -1182,7 +1177,7 @@ export default function References({ data, reload }: { data: DashboardData; relo
 
             <div className="relative">
               <div className="absolute inset-x-0 -top-2 text-center">
-                <span className="bg-white px-2 text-[11px] text-slate-400">or paste CSV text</span>
+                <span className="bg-card px-2 text-[11px] text-muted-foreground">or paste CSV text</span>
               </div>
               <Textarea
                 value={pasteCsv}
@@ -1197,11 +1192,11 @@ export default function References({ data, reload }: { data: DashboardData; relo
             </div>
 
             {/* how it works */}
-            <div className="rounded-lg bg-slate-50 p-3 text-xs leading-relaxed text-slate-600">
-              <p className="mb-1 font-semibold text-slate-700">How the auto-categorisation works</p>
+            <div className="rounded-lg bg-muted p-3 text-xs leading-relaxed text-muted-foreground">
+              <p className="mb-1 font-semibold text-foreground/80">How the auto-categorisation works</p>
               <ul className="list-disc space-y-0.5 pl-4">
-                <li>One column must contain the website links (headers like <code className="rounded bg-white px-1">URL</code>, <code className="rounded bg-white px-1">Website</code> or <code className="rounded bg-white px-1">Link</code> are detected automatically — even without a header it finds the link column).</li>
-                <li>Optional columns: <code className="rounded bg-white px-1">platform</code>, <code className="rounded bg-white px-1">website category</code>, <code className="rounded bg-white px-1">business name</code> and <code className="rounded bg-white px-1">labels</code> (separate multiple labels with <code className="rounded bg-white px-1">|</code> or <code className="rounded bg-white px-1">,</code>).</li>
+                <li>One column must contain the website links (headers like <code className="rounded bg-card px-1">URL</code>, <code className="rounded bg-card px-1">Website</code> or <code className="rounded bg-card px-1">Link</code> are detected automatically — even without a header it finds the link column).</li>
+                <li>Optional columns: <code className="rounded bg-card px-1">platform</code>, <code className="rounded bg-card px-1">website category</code>, <code className="rounded bg-card px-1">business name</code> and <code className="rounded bg-card px-1">labels</code> (separate multiple labels with <code className="rounded bg-card px-1">|</code> or <code className="rounded bg-card px-1">,</code>).</li>
                 <li>CMS is sniffed from the link (myshopify.com → Shopify, wp-content → WordPress…), and the categories come from your taxonomy rules.</li>
                 <li>Duplicates (inside the file or already in the library) are skipped automatically.</li>
               </ul>
@@ -1213,20 +1208,20 @@ export default function References({ data, reload }: { data: DashboardData; relo
                 <div className="flex flex-wrap gap-x-4 gap-y-1">
                   <span className="font-medium text-emerald-700">{importResult.imported} imported</span>
                   {importResult.alreadyInLibrary > 0 && (
-                    <span className="text-slate-500">{importResult.alreadyInLibrary} already in library</span>
+                    <span className="text-muted-foreground">{importResult.alreadyInLibrary} already in library</span>
                   )}
                   {importResult.duplicatesInFile > 0 && (
-                    <span className="text-slate-500">{importResult.duplicatesInFile} duplicates in file</span>
+                    <span className="text-muted-foreground">{importResult.duplicatesInFile} duplicates in file</span>
                   )}
                   {importResult.invalidCount > 0 && (
                     <span className="text-rose-600">{importResult.invalidCount} invalid rows</span>
                   )}
                   {importResult.missingUrl > 0 && (
-                    <span className="text-slate-400">{importResult.missingUrl} rows without a link</span>
+                    <span className="text-muted-foreground">{importResult.missingUrl} rows without a link</span>
                   )}
                 </div>
                 {importResult.invalid.length > 0 && (
-                  <div className="max-h-28 overflow-auto rounded bg-slate-50 p-2 font-mono text-[11px] text-slate-500">
+                  <div className="max-h-28 overflow-auto rounded bg-muted p-2 font-mono text-[11px] text-muted-foreground">
                     {importResult.invalid.map((r) => (
                       <p key={`${r.row}-${r.value}`} className="truncate">
                         row {r.row}: {r.value} — {r.reason}
@@ -1245,7 +1240,6 @@ export default function References({ data, reload }: { data: DashboardData; relo
             <Button
               onClick={runImport}
               disabled={importing || (!importFile && !pasteCsv.trim())}
-              className="bg-gradient-to-r from-teal-600 to-emerald-600 text-white hover:opacity-90"
             >
               {importing ? "Importing…" : "Import websites"}
             </Button>
@@ -1297,9 +1291,9 @@ export default function References({ data, reload }: { data: DashboardData; relo
                       <Lightbulb className="h-4 w-4 text-amber-400" /> {g.platform}
                     </span>
                   </AccordionTrigger>
-                  <AccordionContent className="space-y-3 text-sm text-slate-600">
+                  <AccordionContent className="space-y-3 text-sm text-muted-foreground">
                     <p className="line-clamp-4">
-                      <span className="font-medium text-slate-800">What it is: </span>
+                      <span className="font-medium text-foreground">What it is: </span>
                       {g.definition}
                     </p>
                     {g.benefits && (

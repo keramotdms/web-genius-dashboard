@@ -144,14 +144,14 @@ export default function Overview({ data }: Props) {
       value: money(k.monthTarget),
       sub: k.monthLabel,
       icon: Target,
-      cls: "from-violet-500 to-purple-600",
+      chip: "bg-accent text-accent-foreground",
     },
     {
       label: "Total Achievement",
       value: money(k.achievement),
       sub: `${k.achievementPct}% of target`,
       icon: TrendingUp,
-      cls: "from-emerald-500 to-teal-600",
+      chip: "bg-accent text-accent-foreground",
       progress: Math.min(k.achievementPct, 100),
     },
     {
@@ -159,28 +159,28 @@ export default function Overview({ data }: Props) {
       value: money(Math.abs(k.awayFromTarget)),
       sub: k.awayFromTarget > 0 ? "still to go" : "target beaten!",
       icon: Flag,
-      cls: k.awayFromTarget > 0 ? "from-orange-500 to-rose-500" : "from-lime-500 to-emerald-600",
+      chip: k.awayFromTarget > 0 ? "bg-amber-50 text-amber-700" : "bg-emerald-50 text-emerald-700",
     },
     {
       label: "Green (Fresh) Sales",
       value: money(k.greenSales),
       sub: "brand-new clients",
       icon: Sprout,
-      cls: "from-lime-500 to-emerald-600",
+      chip: "bg-emerald-50 text-emerald-700",
     },
     {
       label: "Repeat Orders",
       value: money(k.repeatOrders),
       sub: "yellow sales",
       icon: Repeat,
-      cls: "from-amber-500 to-orange-600",
+      chip: "bg-amber-50 text-amber-700",
     },
     {
       label: "Daily Avg Sales",
       value: money(k.dailyAvgSales),
       sub: `daily target ${money(k.fixedDailyTarget)}`,
       icon: CalendarDays,
-      cls: "from-teal-500 to-cyan-600",
+      chip: "bg-accent text-accent-foreground",
     },
   ];
 
@@ -191,91 +191,101 @@ export default function Overview({ data }: Props) {
 
   return (
     <div className="space-y-6">
-      {/* KPI cards */}
+      {/* KPI cards — one card language: white surface, hairline edge, tonal icon, ink figures */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-6">
         {cards.map((c) => (
           <div
             key={c.label}
-            className={`relative overflow-hidden rounded-2xl bg-gradient-to-br ${c.cls} p-4 text-white shadow-md transition-transform hover:scale-[1.02]`}
+            className="lift relative rounded-xl border bg-card p-4"
           >
-            <c.icon className="absolute right-3 top-3 h-8 w-8 text-white/30" aria-hidden="true" />
-            <p className="pr-9 text-xs font-medium text-white/85">{c.label}</p>
-            <p className="mt-1 text-2xl font-bold tabular-nums">{c.value}</p>
-            <p className="mt-0.5 text-xs text-white/75">{c.sub}</p>
+            <div className="flex items-start justify-between gap-2">
+              <p className="text-xs font-medium text-muted-foreground">{c.label}</p>
+              <div
+                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${c.chip}`}
+                aria-hidden="true"
+              >
+                <c.icon className="h-4 w-4" />
+              </div>
+            </div>
+            <p className="mt-1 text-2xl font-bold tracking-tight tabular-nums text-foreground">{c.value}</p>
+            <p className="mt-0.5 text-xs text-muted-foreground">{c.sub}</p>
             {typeof c.progress === "number" && (
-              <div className="mt-2">
-                <Progress value={c.progress} className="h-1.5 bg-white/25" />
+              <div className="mt-2.5">
+                <Progress value={c.progress} className="h-1.5" />
               </div>
             )}
           </div>
         ))}
       </div>
 
-      {/* order status chips */}
+      {/* order status chips — one chip style, meaning carried by the dot colour */}
       <div className="flex flex-wrap items-center gap-2">
-        <Badge className="gap-1 border-0 bg-violet-100 text-violet-800 hover:bg-violet-100">
-          <PackageCheck className="h-3.5 w-3.5" /> {k.totalOrders} orders this month
-        </Badge>
-        <Badge className="border-0 bg-emerald-100 text-emerald-800 hover:bg-emerald-100">
-          {k.deliveredOrders} delivered
-        </Badge>
-        <Badge className="border-0 bg-amber-100 text-amber-900 hover:bg-amber-100">
-          {k.wipOrders} in progress
-        </Badge>
-        <Badge className="gap-1 border-0 bg-fuchsia-100 text-fuchsia-800 hover:bg-fuchsia-100">
-          <MessageSquareQuote className="h-3.5 w-3.5" /> {data.funnel.queries} queries handled
-        </Badge>
-        <Badge className="gap-1 border-0 bg-teal-100 text-teal-800 hover:bg-teal-100">
-          <Target className="h-3.5 w-3.5" /> {data.funnel.converted} converted ({pct(data.funnel.convRate)})
-        </Badge>
-        <Badge className="gap-1 border-0 bg-sky-100 text-sky-800 hover:bg-sky-100">
-          <Coins className="h-3.5 w-3.5" /> {money(data.funnel.queryRevenue + data.funnel.briefRevenue)} from queries &amp; briefs
-        </Badge>
+        {[
+          { icon: PackageCheck, text: `${k.totalOrders} orders this month`, dot: "bg-stone-500" },
+          { text: `${k.deliveredOrders} delivered`, dot: "bg-emerald-600" },
+          { text: `${k.wipOrders} in progress`, dot: "bg-amber-500" },
+          { icon: MessageSquareQuote, text: `${data.funnel.queries} queries handled`, dot: "bg-teal-700" },
+          { icon: Target, text: `${data.funnel.converted} converted (${pct(data.funnel.convRate)})`, dot: "bg-teal-700" },
+          { icon: Coins, text: `${money(data.funnel.queryRevenue + data.funnel.briefRevenue)} from queries & briefs`, dot: "bg-stone-500" },
+        ].map((chip) => (
+          <span
+            key={chip.text}
+            className="inline-flex items-center gap-2 rounded-full border bg-card px-3 py-1.5 text-xs font-medium text-foreground"
+          >
+            <span aria-hidden="true" className={`h-2 w-2 rounded-full ${chip.dot}`} />
+            {chip.text}
+          </span>
+        ))}
       </div>
 
-      {/* Projects in Work — CMS platforms, split by team */}
-      <Card className="border-indigo-200 bg-gradient-to-br from-indigo-50 via-white to-cyan-50">
-        <CardHeader className="pb-3">
-          <div className="flex flex-wrap items-center justify-between gap-2">
+      {/* Projects in Work — CMS platforms, split by team (flat rows on hairlines, no boxes in boxes) */}
+      <Card className="rounded-xl">
+        <CardHeader className="pb-0">
+          <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <CardTitle className="text-base">Projects in Work (CMS)</CardTitle>
               <CardDescription>
                 CMS-platform orders currently being worked on — excluding Delivered, Cancelled &amp; C_Forward_Sales
               </CardDescription>
             </div>
-            <div className="flex items-baseline gap-1.5 rounded-xl bg-gradient-to-br from-indigo-500 to-cyan-600 px-4 py-2 text-white shadow-sm">
-              <span className="text-2xl font-bold">{cmsInWork.length}</span>
-              <span className="text-xs text-white/80">/ {inWorkOrders.length} active</span>
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-3xl font-bold tracking-tight tabular-nums text-primary">{cmsInWork.length}</span>
+              <span className="text-sm text-muted-foreground">/ {inWorkOrders.length} active</span>
             </div>
           </div>
         </CardHeader>
-        <CardContent className="space-y-3">
+        <CardContent className="space-y-4 pt-1">
           {/* team split — exactly SAA_Team and STA_Team, nothing else */}
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid gap-px overflow-hidden rounded-lg border bg-border sm:grid-cols-2">
             {teamRows.map((t) => (
-              <div
-                key={t.display}
-                className="rounded-xl border border-indigo-100 bg-white/80 p-3 text-center shadow-sm"
-              >
-                <p className="truncate text-xs font-semibold text-slate-500">{t.display}</p>
-                <p className={`mt-0.5 text-2xl font-bold ${t.count ? "text-indigo-700" : "text-slate-300"}`}>
+              <div key={t.display} className="bg-card px-5 py-4">
+                <p className="text-xs font-medium text-muted-foreground">{t.display}</p>
+                <p
+                  className={`mt-1 text-3xl font-bold tracking-tight tabular-nums ${
+                    t.count ? "text-foreground" : "text-stone-300"
+                  }`}
+                >
                   {t.count}
                 </p>
-                <p className="text-[10px] text-slate-400">
+                <p className="text-xs text-muted-foreground">
                   {t.count === 1 ? "project in work" : "projects in work"}
                 </p>
               </div>
             ))}
             {!teamRows.length && (
-              <p className="text-sm text-slate-400">No teams found in the sheet yet</p>
+              <p className="bg-card px-5 py-4 text-sm text-muted-foreground">No teams found in the sheet yet</p>
             )}
           </div>
           {/* platform breakdown chips */}
           {platformCounts.length > 0 && (
-            <div className="flex flex-wrap items-center gap-2 pt-1">
-              <span className="text-[11px] font-medium text-slate-400">By platform</span>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-xs text-muted-foreground">By platform</span>
               {platformCounts.map((p) => (
-                <Badge key={p.display} className="border-0 bg-indigo-100 text-indigo-800 hover:bg-indigo-100">
+                <Badge
+                  key={p.display}
+                  variant="outline"
+                  className="border-border bg-accent text-accent-foreground"
+                >
                   {p.display} ({p.count})
                 </Badge>
               ))}
@@ -284,18 +294,18 @@ export default function Overview({ data }: Props) {
         </CardContent>
       </Card>
 
-      {/* conversion funnel mini-strip */}
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+      {/* funnel mini-strip — same card language as the KPI row */}
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
         {[
-          { label: "Queries handled", value: String(data.funnel.queries), sub: "dashboard sheet tracking", cls: "from-violet-500 to-purple-600" },
-          { label: "Converted", value: String(data.funnel.converted), sub: pct(data.funnel.convRate) + " conversion rate", cls: "from-emerald-500 to-teal-600" },
-          { label: "Query-sourced sales", value: money(data.funnel.queryRevenue), sub: data.funnel.queryOrders + " orders via Conversion/Query", cls: "from-amber-500 to-orange-600" },
-          { label: "Brief-sourced sales", value: money(data.funnel.briefRevenue), sub: data.funnel.briefOrders + " orders via Brief/Invitation", cls: "from-sky-500 to-blue-600" },
+          { label: "Queries handled", value: String(data.funnel.queries), sub: "dashboard sheet tracking" },
+          { label: "Converted", value: String(data.funnel.converted), sub: pct(data.funnel.convRate) + " conversion rate" },
+          { label: "Query-sourced sales", value: money(data.funnel.queryRevenue), sub: data.funnel.queryOrders + " orders via Conversion/Query" },
+          { label: "Brief-sourced sales", value: money(data.funnel.briefRevenue), sub: data.funnel.briefOrders + " orders via Brief/Invitation" },
         ].map((c) => (
-          <div key={c.label} className={`relative overflow-hidden rounded-xl bg-gradient-to-br ${c.cls} p-3.5 text-white shadow-sm transition-transform hover:scale-[1.02]`}>
-            <p className="text-[11px] font-medium text-white/85">{c.label}</p>
-            <p className="mt-0.5 text-xl font-bold tabular-nums">{c.value}</p>
-            <p className="text-[10px] text-white/75">{c.sub}</p>
+          <div key={c.label} className="lift rounded-xl border bg-card p-3.5">
+            <p className="text-xs font-medium text-muted-foreground">{c.label}</p>
+            <p className="mt-1 text-xl font-bold tracking-tight tabular-nums text-foreground">{c.value}</p>
+            <p className="text-xs text-muted-foreground">{c.sub}</p>
           </div>
         ))}
       </div>
@@ -313,26 +323,26 @@ export default function Overview({ data }: Props) {
                 <AreaChart data={dailyData} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
                   <defs>
                     <linearGradient id="salesFill" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#10b981" stopOpacity={0.35} />
-                      <stop offset="100%" stopColor="#10b981" stopOpacity={0.02} />
+                      <stop offset="0%" stopColor="#0d9488" stopOpacity={0.28} />
+                      <stop offset="100%" stopColor="#0d9488" stopOpacity={0.02} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
-                  <XAxis dataKey="date" tick={{ fontSize: 11 }} />
-                  <YAxis tick={{ fontSize: 11 }} />
-                  <Tooltip formatter={(v: number) => money(v)} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e7e5e4" />
+                  <XAxis dataKey="date" tick={{ fontSize: 11, fill: "#78716c" }} />
+                  <YAxis tick={{ fontSize: 11, fill: "#78716c" }} />
+                  <Tooltip cursor={{ stroke: "#a8a29e", strokeDasharray: "4 4" }} formatter={(v: number) => money(v)} />
                   <Legend />
                   <Area
                     type="monotone"
                     dataKey="Sales"
-                    stroke="#10b981"
+                    stroke="#0d9488"
                     strokeWidth={2}
                     fill="url(#salesFill)"
                   />
                   <Area
                     type="monotone"
                     dataKey="Target"
-                    stroke="#8b5cf6"
+                    stroke="#a8a29e"
                     strokeWidth={2}
                     strokeDasharray="6 4"
                     fill="transparent"
@@ -340,7 +350,8 @@ export default function Overview({ data }: Props) {
                 </AreaChart>
               </ResponsiveContainer>
             ) : (
-              <div className="flex h-full items-center justify-center text-sm text-slate-400">
+              <div className="flex h-full flex-col items-center justify-center gap-2 text-sm text-muted-foreground">
+                <TrendingUp className="h-6 w-6 text-stone-300" aria-hidden="true" />
                 No daily data in the sheet yet
               </div>
             )}
@@ -384,10 +395,10 @@ export default function Overview({ data }: Props) {
           <CardContent className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={sourceData} layout="vertical" margin={{ top: 0, right: 16, left: 30, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
-                <XAxis type="number" tick={{ fontSize: 11 }} />
-                <YAxis dataKey="name" type="category" width={110} tick={{ fontSize: 11 }} />
-                <Tooltip formatter={(v: number) => money(v)} />
+                <CartesianGrid strokeDasharray="3 3" stroke="#e7e5e4" />
+                <XAxis type="number" tick={{ fontSize: 11, fill: "#78716c" }} />
+                <YAxis dataKey="name" type="category" width={110} tick={{ fontSize: 11, fill: "#1c1917" }} />
+                <Tooltip cursor={{ fill: "#f5f5f4" }} formatter={(v: number) => money(v)} />
                 <Bar dataKey="value" radius={[0, 6, 6, 0]}>
                   {sourceData.map((_, i) => (
                     <Cell key={i} fill={CHART_COLORS[(i + 1) % CHART_COLORS.length]} />
@@ -398,18 +409,19 @@ export default function Overview({ data }: Props) {
           </CardContent>
         </Card>
 
-        {/* AI Insights */}
-        <Card className="relative overflow-hidden border-violet-200 lg:col-span-2">
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-violet-50 via-transparent to-fuchsia-50" />
+        {/* AI Insights — the product's one dark surface: AI speaks from ink, not from a gradient */}
+        <Card className="relative overflow-hidden border-stone-800 bg-stone-900 text-stone-50 lg:col-span-2">
           <CardHeader className="relative">
             <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-fuchsia-600 text-white">
-                  <Bot className="h-5 w-5" />
+              <div className="flex items-center gap-2.5">
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-teal-400/15 text-teal-300">
+                  <Bot className="h-5 w-5" aria-hidden="true" />
                 </div>
                 <div>
-                  <CardTitle className="text-base">AI Insights</CardTitle>
-                  <CardDescription>Auto-generated analysis of {k.monthLabel} performance</CardDescription>
+                  <CardTitle className="text-base text-stone-50">AI Insights</CardTitle>
+                  <CardDescription className="text-stone-400">
+                    Auto-generated analysis of {k.monthLabel} performance
+                  </CardDescription>
                 </div>
               </div>
               <Button
@@ -417,7 +429,7 @@ export default function Overview({ data }: Props) {
                 variant="outline"
                 onClick={generateInsights}
                 disabled={loadingInsights}
-                className="shrink-0 border-violet-300 text-violet-700 hover:bg-violet-50"
+                className="shrink-0 border-stone-700 bg-transparent text-stone-200 hover:bg-stone-800 hover:text-stone-50"
               >
                 <RefreshCw className={`mr-1 h-4 w-4 ${loadingInsights ? "animate-spin" : ""}`} />
                 Regenerate
@@ -427,25 +439,25 @@ export default function Overview({ data }: Props) {
           <CardContent className="relative">
             {loadingInsights ? (
               <div className="space-y-2.5">
-                <p className="flex items-center gap-2 text-sm text-violet-700">
+                <p className="flex items-center gap-2 text-sm text-teal-300">
                   <RefreshCw className="h-3.5 w-3.5 animate-spin" /> AI is analyzing your sales data…
                 </p>
                 {Array.from({ length: 5 }).map((_, i) => (
-                  <Skeleton key={i} className="h-4 w-full" />
+                  <Skeleton key={i} className="h-4 w-full bg-stone-800" />
                 ))}
               </div>
             ) : insightLines.length ? (
               <ul className="space-y-2.5">
                 {insightLines.map((line, i) => (
-                  <li key={i} className="flex gap-2 text-sm leading-relaxed text-slate-700">
-                    <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500" />
+                  <li key={i} className="flex gap-2.5 text-sm leading-relaxed text-stone-200">
+                    <span aria-hidden="true" className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-teal-300" />
                     {line.replace(/^[-•*]\s*/, "")}
                   </li>
                 ))}
               </ul>
             ) : (
-              <p className="text-sm text-slate-500">
-                Click <span className="font-medium text-violet-700">Regenerate</span> to get a fresh AI analysis of
+              <p className="text-sm text-stone-400">
+                Click <span className="font-medium text-teal-300">Regenerate</span> to get a fresh AI analysis of
                 your target progress, top members and platform mix.
               </p>
             )}

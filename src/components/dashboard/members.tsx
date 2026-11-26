@@ -57,10 +57,10 @@ function TeamChip({
       type="button"
       onClick={onClick}
       aria-pressed={active}
-      className={`inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 focus-visible:ring-offset-1 ${
+      className={`inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 ${
         active
-          ? "border-violet-600 bg-violet-600 text-white shadow-sm"
-          : "border-slate-200 bg-white text-slate-600 hover:border-violet-400 hover:text-violet-700"
+          ? "border-primary bg-primary text-primary-foreground shadow-none"
+          : "border-border bg-card text-muted-foreground hover:border-teal-600 hover:text-teal-700"
       }`}
     >
       {icon}
@@ -165,11 +165,11 @@ export default function Members({ data }: { data: DashboardData }) {
   // funnel visual: counts only (queries = full width, converted proportional)
   const totalRevenueHint = data.kpis.achievement || 1;
   const funnelSteps = [
-    { label: "Queries handled", value: funnel.queries, color: "from-violet-500 to-purple-600", icon: MessageSquareQuote, widthPct: 100 },
+    { label: "Queries handled", value: funnel.queries, color: "bg-teal-700", icon: MessageSquareQuote, widthPct: 100 },
     {
       label: "Converted to orders",
       value: funnel.converted,
-      color: "from-emerald-500 to-teal-600",
+      color: "bg-emerald-600",
       icon: Target,
       widthPct: funnel.queries ? Math.max((funnel.converted / funnel.queries) * 100, 2) : 2,
     },
@@ -178,23 +178,23 @@ export default function Members({ data }: { data: DashboardData }) {
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center gap-2">
-        <Badge className="border-0 bg-emerald-100 text-emerald-800 hover:bg-emerald-100">
+        <Badge variant="outline" className="border-border bg-card text-muted-foreground">
           {data.members.length} members
         </Badge>
-        <Badge className="border-0 bg-violet-100 text-violet-800 hover:bg-violet-100">
+        <Badge variant="outline" className="border-border bg-accent text-accent-foreground">
           {withTarget} with targets
         </Badge>
         {topPerformer?.achievement > 0 && (
-          <Badge className="gap-1 border-0 bg-amber-100 text-amber-800 hover:bg-amber-100">
+          <Badge variant="outline" className="gap-1 border-amber-200 bg-amber-50 text-amber-800">
             <Crown className="h-3.5 w-3.5" /> Top performer: {topPerformer.name} ({money(topPerformer.achievement)})
           </Badge>
         )}
       </div>
 
       {/* ── Team filter ── */}
-      <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-violet-100 bg-white/80 px-4 py-3 shadow-sm backdrop-blur">
-        <span className="flex items-center gap-1.5 text-xs font-semibold text-slate-500">
-          <UsersRound className="h-4 w-4 text-violet-500" aria-hidden="true" /> Team filter
+      <div className="flex flex-wrap items-center gap-3 rounded-xl border bg-card px-4 py-3">
+        <span className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
+          <UsersRound className="h-4 w-4 text-primary" aria-hidden="true" /> Team filter
         </span>
         <div className="flex flex-wrap gap-2">
           <TeamChip active={teamFilter === "all"} onClick={() => setTeamFilter("all")}>
@@ -204,93 +204,82 @@ export default function Members({ data }: { data: DashboardData }) {
             CMS Sales Team ({cmsCount})
           </TeamChip>
         </div>
-        <p className="w-full text-[11px] text-slate-400 sm:w-auto sm:flex-1 sm:text-right">
+        <p className="w-full text-[11px] text-muted-foreground sm:w-auto sm:flex-1 sm:text-right">
           filters the Top-10 chart &amp; individual table below
         </p>
       </div>
 
       {/* ── Query → Sales Conversion Funnel ── */}
-      <Card className="overflow-hidden border-violet-200">
-        <div className="bg-gradient-to-r from-violet-600 via-purple-600 to-fuchsia-600 px-6 py-4 text-white">
+      <Card className="rounded-xl">
+        <CardHeader>
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-2">
-              <Filter className="h-5 w-5" />
-              <div>
-                <h2 className="font-semibold">Query &rarr; Sales Conversion Funnel</h2>
-                <p className="text-xs text-white/85">
-                  How many queries &amp; briefs each channel produced — and how much sales they closed
-                </p>
-              </div>
+            <div>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Filter className="h-5 w-5 text-primary" aria-hidden="true" />
+                Query → Sales Conversion Funnel
+              </CardTitle>
+              <CardDescription>
+                How many queries &amp; briefs each channel produced — and how much sales they closed
+              </CardDescription>
             </div>
-            <div className="flex items-center gap-2 rounded-full bg-white/20 px-4 py-1.5 text-sm font-semibold backdrop-blur">
+            <div className="flex items-center gap-2 rounded-full border bg-accent px-4 py-1.5 text-sm font-semibold text-accent-foreground">
               Conversion rate: {pct(funnel.convRate)}
             </div>
           </div>
-        </div>
+        </CardHeader>
         <CardContent className="space-y-5 pt-5">
           {/* funnel bars */}
           <div className="space-y-3">
             {funnelSteps.map((s) => (
               <div key={s.label} className="flex items-center gap-3">
-                <div className="flex w-44 shrink-0 items-center gap-2 text-sm font-medium text-slate-700">
-                  <s.icon className="h-4 w-4 text-violet-500" /> {s.label}
+                <div className="flex w-44 shrink-0 items-center gap-2 text-sm font-medium text-foreground">
+                  <s.icon className="h-4 w-4 text-primary" /> {s.label}
                 </div>
-                <div className="h-7 flex-1 overflow-hidden rounded-lg bg-slate-100">
+                <div className="h-7 flex-1 overflow-hidden rounded-lg bg-muted">
                   <div
-                    className={`h-full rounded-lg bg-gradient-to-r ${s.color} transition-[width] duration-500`}
+                    className={`h-full rounded-lg ${s.color} transition-[width] duration-500`}
                     style={{ width: `${s.widthPct}%` }}
                   />
                 </div>
-                <div className="w-24 shrink-0 text-right text-sm font-bold text-slate-800">
+                <div className="w-24 shrink-0 text-right text-sm font-bold tabular-nums text-foreground">
                   {s.value}
                 </div>
               </div>
             ))}
             {/* revenue bar — own scale */}
             <div className="flex items-center gap-3">
-              <div className="flex w-44 shrink-0 items-center gap-2 text-sm font-medium text-slate-700">
-                <TrendingUp className="h-4 w-4 text-amber-500" /> Revenue from queries
+              <div className="flex w-44 shrink-0 items-center gap-2 text-sm font-medium text-foreground">
+                <TrendingUp className="h-4 w-4 text-amber-600" /> Revenue from queries
               </div>
-              <div className="h-7 flex-1 overflow-hidden rounded-lg bg-slate-100">
+              <div className="h-7 flex-1 overflow-hidden rounded-lg bg-muted">
                 <div
-                  className="h-full rounded-lg bg-gradient-to-r from-amber-500 to-orange-600 transition-[width] duration-500"
+                  className="h-full rounded-lg bg-amber-500 transition-[width] duration-500"
                   style={{ width: `${Math.max(Math.min((funnel.queryRevenue / Math.max(totalRevenueHint, 1)) * 100, 100), 2)}%` }}
                 />
               </div>
-              <div className="w-24 shrink-0 text-right text-sm font-bold text-slate-800">{money(funnel.queryRevenue)}</div>
+              <div className="w-24 shrink-0 text-right text-sm font-bold tabular-nums text-foreground">{money(funnel.queryRevenue)}</div>
             </div>
           </div>
 
-          {/* funnel stat chips */}
+          {/* funnel stat chips — flat cards, meaning in the tonal icon */}
           <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-            <div className="rounded-xl border border-violet-100 bg-violet-50/60 p-3">
-              <p className="flex items-center gap-1.5 text-xs font-medium text-violet-700">
-                <MessageSquareQuote className="h-3.5 w-3.5" /> Queries handled
-              </p>
-              <p className="mt-1 text-xl font-bold text-violet-900">{funnel.queries}</p>
-              <p className="text-[11px] text-violet-600">tracked on the dashboard sheet</p>
-            </div>
-            <div className="rounded-xl border border-emerald-100 bg-emerald-50/60 p-3">
-              <p className="flex items-center gap-1.5 text-xs font-medium text-emerald-700">
-                <Target className="h-3.5 w-3.5" /> Queries converted
-              </p>
-              <p className="mt-1 text-xl font-bold text-emerald-900">{funnel.converted}</p>
-              <p className="text-[11px] text-emerald-600">{pct(funnel.convRate)} of all queries</p>
-            </div>
-            <div className="rounded-xl border border-amber-100 bg-amber-50/60 p-3">
-              <p className="flex items-center gap-1.5 text-xs font-medium text-amber-700">
-                <ClipboardList className="h-3.5 w-3.5" /> Query-sourced sales
-              </p>
-              <p className="mt-1 text-xl font-bold text-amber-900">{money(funnel.queryRevenue)}</p>
-              <p className="text-[11px] text-amber-600">{funnel.queryOrders} orders from Conversion/Query</p>
-            </div>
-            <div className="rounded-xl border border-sky-100 bg-sky-50/60 p-3">
-              <p className="flex items-center gap-1.5 text-xs font-medium text-sky-700">
-                <Send className="h-3.5 w-3.5" /> Brief-sourced sales
-              </p>
-              <p className="mt-1 text-xl font-bold text-sky-900">{money(funnel.briefRevenue)}</p>
-              <p className="text-[11px] text-sky-600">{funnel.briefOrders} orders from Brief/Invitation</p>
-            </div>
+            {[
+              { icon: MessageSquareQuote, chip: "bg-accent text-accent-foreground", label: "Queries handled", value: String(funnel.queries), sub: "tracked on the dashboard sheet" },
+              { icon: Target, chip: "bg-emerald-50 text-emerald-700", label: "Queries converted", value: String(funnel.converted), sub: `${pct(funnel.convRate)} of all queries` },
+              { icon: ClipboardList, chip: "bg-amber-50 text-amber-700", label: "Query-sourced sales", value: money(funnel.queryRevenue), sub: `${funnel.queryOrders} orders from Conversion/Query` },
+              { icon: Send, chip: "bg-stone-100 text-stone-700", label: "Brief-sourced sales", value: money(funnel.briefRevenue), sub: `${funnel.briefOrders} orders from Brief/Invitation` },
+            ].map((c) => (
+              <div key={c.label} className="rounded-lg border bg-card p-3">
+                <p className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+                  <span aria-hidden="true" className={`flex h-6 w-6 items-center justify-center rounded-md ${c.chip}`}>
+                    <c.icon className="h-3.5 w-3.5" />
+                  </span>
+                  {c.label}
+                </p>
+                <p className="mt-1.5 text-xl font-bold tracking-tight tabular-nums text-foreground">{c.value}</p>
+                <p className="text-[11px] text-muted-foreground">{c.sub}</p>
+              </div>
+            ))}
           </div>
         </CardContent>
       </Card>
@@ -335,9 +324,9 @@ export default function Members({ data }: { data: DashboardData }) {
                     <TableCell className="font-semibold text-emerald-700">{money(s.revenue)}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
-                        <div className="h-1.5 w-16 overflow-hidden rounded-full bg-slate-100">
+                        <div className="h-1.5 w-16 overflow-hidden rounded-full bg-muted">
                           <div
-                            className="h-full rounded-full bg-violet-500"
+                            className="h-full rounded-full bg-teal-700"
                             style={{ width: `${Math.min(s.pct, 100)}%` }}
                           />
                         </div>
@@ -359,22 +348,22 @@ export default function Members({ data }: { data: DashboardData }) {
         <CardHeader>
           <CardTitle className="text-base">Achievement vs Target — Top 10</CardTitle>
           <CardDescription>
-            Green bars are actual sales, violet bars are the monthly target
+            Teal bars are actual sales, grey bars are the monthly target
             {teamFilter === "cms" ? " · showing CMS Sales Team only" : ""}
           </CardDescription>
         </CardHeader>
         <CardContent className="h-[380px]">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={chartData} layout="vertical" margin={{ top: 0, right: 24, left: 10, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
-              <XAxis type="number" tick={{ fontSize: 11 }} />
-              <YAxis dataKey="name" type="category" width={130} tick={{ fontSize: 11 }} />
-              <Tooltip formatter={(v: number) => money(v)} />
+              <CartesianGrid strokeDasharray="3 3" stroke="#e7e5e4" />
+              <XAxis type="number" tick={{ fontSize: 11, fill: "#78716c" }} />
+              <YAxis dataKey="name" type="category" width={130} tick={{ fontSize: 11, fill: "#1c1917" }} />
+              <Tooltip cursor={{ fill: "#f5f5f4" }} formatter={(v: number) => money(v)} />
               <Legend />
-              <Bar dataKey="Target" fill={CHART_COLORS[0]} radius={[0, 4, 4, 0]} barSize={9} />
-              <Bar dataKey="Achievement" fill={CHART_COLORS[1]} radius={[0, 4, 4, 0]} barSize={9}>
+              <Bar dataKey="Target" fill="#d6d3d1" radius={[0, 4, 4, 0]} barSize={9} />
+              <Bar dataKey="Achievement" fill="#0d9488" radius={[0, 4, 4, 0]} barSize={9}>
                 {chartData.map((_, i) => (
-                  <Cell key={i} fill={CHART_COLORS[1]} />
+                  <Cell key={i} fill="#0d9488" />
                 ))}
               </Bar>
             </BarChart>
@@ -406,7 +395,7 @@ export default function Members({ data }: { data: DashboardData }) {
                         <button
                           type="button"
                           onClick={() => toggleSort(h.key)}
-                          className="inline-flex items-center gap-0.5 rounded font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400"
+                          className="inline-flex items-center gap-0.5 rounded font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                         >
                           {h.label}
                           <span aria-hidden="true">{h.key === sortKey ? (asc ? " ↑" : " ↓") : ""}</span>

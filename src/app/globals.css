@@ -43,73 +43,82 @@
   --radius-xl: calc(var(--radius) + 4px);
 }
 
+/*
+ * ── "Ledger" design tokens ──────────────────────────────────────────────
+ * One system for the whole product:
+ *   canvas   — warm stone paper, cards rest on it as flat white surfaces
+ *   ink      — near-black text in three steps (foreground / stone-600 / stone-400)
+ *   accent   — ONE deep teal, used for primary actions, the active tab and key figures
+ *   status   — emerald (positive), amber (in progress), rose (destructive) stay semantic
+ * No gradients, no violet/lavender, flat surfaces separated by hairlines.
+ */
 :root {
   --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --background: #fafaf9; /* stone-50 canvas */
+  --foreground: #1c1917; /* stone-900 ink */
+  --card: #ffffff;
+  --card-foreground: #1c1917;
+  --popover: #ffffff;
+  --popover-foreground: #1c1917;
+  --primary: #115e59; /* teal-800 — the one accent */
+  --primary-foreground: #ffffff;
+  --secondary: #f5f5f4; /* stone-100 */
+  --secondary-foreground: #1c1917;
+  --muted: #f5f5f4;
+  --muted-foreground: #78716c; /* stone-500 */
+  --accent: #f0fdfa; /* teal-50 tonal surface */
+  --accent-foreground: #134e4a; /* teal-950 */
+  --destructive: #e11d48; /* rose-600 */
+  --border: #e7e5e4; /* stone-200 hairline */
+  --input: #d6d3d1; /* stone-300 visible input edge */
+  --ring: #0f766e; /* teal-700 focus */
+  --chart-1: #0f766e; /* teal-700 — lead data colour */
+  --chart-2: #d97706; /* amber-600 */
+  --chart-3: #64748b; /* slate-500 */
+  --chart-4: #0891b2; /* cyan-600 */
+  --chart-5: #059669; /* emerald-600 */
+  --sidebar: #ffffff;
+  --sidebar-foreground: #1c1917;
+  --sidebar-primary: #115e59;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #f5f5f4;
+  --sidebar-accent-foreground: #1c1917;
+  --sidebar-border: #e7e5e4;
+  --sidebar-ring: #0f766e;
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --background: #1c1917;
+  --foreground: #fafaf9;
+  --card: #292524; /* stone-800 */
+  --card-foreground: #fafaf9;
+  --popover: #292524;
+  --popover-foreground: #fafaf9;
+  --primary: #2dd4bf; /* teal-400 on dark */
+  --primary-foreground: #042f2e;
+  --secondary: #292524;
+  --secondary-foreground: #fafaf9;
+  --muted: #292524;
+  --muted-foreground: #a8a29e;
+  --accent: #134e4a;
+  --accent-foreground: #f0fdfa;
+  --destructive: #f43f5e;
+  --border: #44403c;
+  --input: #57534e;
+  --ring: #2dd4bf;
+  --chart-1: #2dd4bf;
+  --chart-2: #fbbf24;
+  --chart-3: #94a3b8;
+  --chart-4: #22d3ee;
+  --chart-5: #34d399;
+  --sidebar: #292524;
+  --sidebar-foreground: #fafaf9;
+  --sidebar-primary: #2dd4bf;
+  --sidebar-primary-foreground: #042f2e;
+  --sidebar-accent: #292524;
+  --sidebar-accent-foreground: #fafaf9;
+  --sidebar-border: #44403c;
+  --sidebar-ring: #2dd4bf;
 }
 
 @layer base {
@@ -121,7 +130,7 @@
   }
 }
 
-/* Custom slim scrollbars */
+/* Custom slim scrollbars — neutral stone, never a rainbow */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
@@ -130,11 +139,11 @@
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #ddd2f5;
+  background: #d6d3d1;
   border-radius: 8px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #c3b4ec;
+  background: #a8a29e;
 }
 
 /* ── Interface-quality baseline (web-interface-guidelines + Hallmark floor) ── */
@@ -147,7 +156,7 @@ html {
 body {
   overflow-x: clip;
 }
-/* Honor prefers-reduced-motion for every CSS animation (ping, spin, pulse…) */
+/* Honour prefers-reduced-motion for every CSS animation (ping, spin, pulse…) */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -156,5 +165,28 @@ body {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+}
+
+/* ── Taste motion floor ───────────────────────────────────────────────────
+   Linked cards lift 2px; transforms and opacity only, never width/height.
+   `.lift` is the product's single hover language for clickable surfaces. */
+.lift {
+  transition: transform 180ms ease, box-shadow 180ms ease;
+}
+.lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px -8px rgb(28 25 23 / 0.18);
+}
+.lift:active {
+  transform: translateY(0);
+  box-shadow: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .lift,
+  .lift:hover,
+  .lift:active {
+    transform: none;
+    transition: none;
   }
 }

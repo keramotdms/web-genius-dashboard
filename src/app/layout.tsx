@@ -35,9 +35,9 @@ export const metadata: Metadata = {
   },
 };
 
-/** Matches the violet-700 header so mobile browser chrome blends with the page. */
+/** Matches the light canvas so mobile browser chrome blends with the page. */
 export const viewport: Viewport = {
-  themeColor: "#6d28d9",
+  themeColor: "#fafaf9",
 };
 
 export default function RootLayout({

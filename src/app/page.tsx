@@ -119,83 +119,71 @@ export default function Home() {
   const syncTime = syncedAt ? new Date(syncedAt).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }) : "";
 
   return (
-    <div className="relative flex min-h-screen flex-col bg-gradient-to-br from-violet-50 via-white to-amber-50">
+    <div className="relative flex min-h-screen flex-col bg-background">
       {/* skip link — keyboard users reach the content without tabbing the header */}
       <a
         href="#main-content"
-        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-violet-700 focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-white"
+        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-primary focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-primary-foreground"
       >
         Skip to content
       </a>
-      {/* ambient background blobs */}
-      <div className="pointer-events-none fixed inset-0 overflow-hidden">
-        <div className="absolute -left-40 top-1/4 h-96 w-96 rounded-full bg-fuchsia-200/25 blur-3xl" />
-        <div className="absolute -right-40 top-2/3 h-96 w-96 rounded-full bg-teal-200/25 blur-3xl" />
-        <div className="absolute left-1/3 -top-40 h-96 w-96 rounded-full bg-violet-200/20 blur-3xl" />
-      </div>
-      {/* Header */}
-      <header className="relative overflow-hidden bg-gradient-to-r from-violet-700 via-fuchsia-600 to-rose-500 text-white shadow-lg">
-        <div className="pointer-events-none absolute -right-16 -top-24 h-72 w-72 rounded-full bg-white/10 blur-2xl" />
-        <div className="pointer-events-none absolute -bottom-28 left-1/4 h-64 w-64 rounded-full bg-fuchsia-300/20 blur-3xl" />
-        <div className="relative mx-auto flex max-w-7xl flex-col gap-5 px-4 py-6 md:flex-row md:items-center md:justify-between md:py-7">
-          <div className="flex items-start gap-3">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/20 shadow-inner backdrop-blur">
-              <Sparkles className="h-6 w-6" />
+      {/* Header — flat white surface on a hairline, ink text, one accent */}
+      <header className="sticky top-0 z-40 border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/85">
+        <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-4 md:flex-row md:items-center md:justify-between md:py-3.5">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+              <Sparkles className="h-5 w-5" aria-hidden="true" />
             </div>
-            <div>
-              <h1 className="text-xl font-bold tracking-tight md:text-2xl">
+            <div className="min-w-0">
+              <h1 className="text-base font-semibold tracking-tight text-foreground md:text-lg">
                 Web Genius AI Dashboard
               </h1>
-              <p className="text-sm text-white/85">
+              <p className="truncate text-xs text-muted-foreground md:text-sm">
                 {data
                   ? `${data.monthLabel} sales, queries, quotations, references & instructions — all in one place`
                   : "Live-synced from your Google Sheets"}
               </p>
             </div>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2.5">
             {data && (
               <>
-                <div className="hidden items-center gap-3 rounded-2xl bg-white/15 px-4 py-2 text-sm backdrop-blur md:flex">
-                  <div>
-                    <p className="text-[11px] text-white/75">Achievement</p>
-                    <p className="font-bold tabular-nums">{money(data.kpis.achievement)}</p>
+                {/* quiet month readout — figures in ink, labels in muted */}
+                <div className="hidden items-center gap-4 rounded-lg border bg-background px-4 py-1.5 md:flex">
+                  <div className="text-right">
+                    <p className="text-[10px] leading-tight text-muted-foreground">Achievement</p>
+                    <p className="text-sm font-semibold tabular-nums">{money(data.kpis.achievement)}</p>
                   </div>
-                  <div className="h-6 w-px bg-white/25" />
-                  <div>
-                    <p className="text-[11px] text-white/75">Queries</p>
-                    <p className="font-bold tabular-nums">
+                  <div className="h-7 w-px bg-border" />
+                  <div className="text-right">
+                    <p className="text-[10px] leading-tight text-muted-foreground">Queries</p>
+                    <p className="text-sm font-semibold tabular-nums">
                       {data.funnel.queries} ({Math.round(data.funnel.convRate * 100)}%)
                     </p>
                   </div>
-                  <div className="h-6 w-px bg-white/25" />
-                  <div>
-                    <p className="text-[11px] text-white/75">Orders</p>
-                    <p className="font-bold tabular-nums">{data.kpis.totalOrders}</p>
+                  <div className="h-7 w-px bg-border" />
+                  <div className="text-right">
+                    <p className="text-[10px] leading-tight text-muted-foreground">Orders</p>
+                    <p className="text-sm font-semibold tabular-nums">{data.kpis.totalOrders}</p>
                   </div>
                 </div>
-                <Badge variant="secondary" className="bg-white/20 text-white hover:bg-white/20">
+                <Badge variant="outline" className="border-border bg-background text-muted-foreground">
                   {data.monthLabel}
                 </Badge>
               </>
             )}
             <Badge
-              variant="secondary"
-              className="bg-white/20 text-white hover:bg-white/20"
+              variant="outline"
+              className="gap-1.5 border-border bg-background text-muted-foreground"
               title={source}
             >
-              <span aria-hidden="true" className="relative mr-1.5 flex h-2 w-2">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-300 opacity-75" />
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-300" />
+              <span aria-hidden="true" className="relative flex h-2 w-2">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-60" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-600" />
               </span>
               {syncTime ? `Synced ${syncTime}` : "Syncing…"}
             </Badge>
-            <Button
-              size="sm"
-              onClick={() => load(true)}
-              disabled={refreshing}
-              className="bg-white text-fuchsia-700 hover:bg-white/90"
-            >
+            <Button size="sm" onClick={() => load(true)} disabled={refreshing}>
               <RefreshCw className={`mr-1 h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
               {refreshing ? "Syncing…" : "Sync now"}
             </Button>
@@ -220,29 +208,30 @@ export default function Home() {
           <div className="space-y-6">
             <div className="grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-6">
               {Array.from({ length: 6 }).map((_, i) => (
-                <Skeleton key={i} className="h-28 rounded-2xl" />
+                <Skeleton key={i} className="h-28 rounded-xl" />
               ))}
             </div>
-            <Skeleton className="h-80 rounded-2xl" />
-            <Skeleton className="h-64 rounded-2xl" />
+            <Skeleton className="h-80 rounded-xl" />
+            <Skeleton className="h-64 rounded-xl" />
           </div>
         ) : data ? (
           <Tabs defaultValue="overview" onValueChange={onTabChange} className="w-full">
+            {/* one navigation system: every tab answers the same way — the active one is the accent */}
             <div className="mb-6 overflow-x-auto pb-1">
-              <TabsList className="h-auto w-max gap-1 rounded-2xl border bg-white/80 p-1.5 shadow-sm backdrop-blur">
+              <TabsList className="h-auto w-max gap-1 rounded-xl border bg-card p-1 shadow-none">
                 {[
-                  { v: "overview", icon: LayoutDashboard, label: "Overview", active: "data-[state=active]:bg-violet-600" },
-                  { v: "orders", icon: ShoppingCart, label: "Orders", active: "data-[state=active]:bg-fuchsia-600" },
-                  { v: "members", icon: Users, label: "Members & Conversion", active: "data-[state=active]:bg-emerald-600" },
-                  { v: "quotes", icon: FileText, label: "Quotations", active: "data-[state=active]:bg-amber-500" },
-                  { v: "references", icon: Globe, label: "References", active: "data-[state=active]:bg-teal-600" },
-                  { v: "messages", icon: MessageSquareText, label: "Instructions & Messages", active: "data-[state=active]:bg-rose-500" },
+                  { v: "overview", icon: LayoutDashboard, label: "Overview" },
+                  { v: "orders", icon: ShoppingCart, label: "Orders" },
+                  { v: "members", icon: Users, label: "Members & Conversion" },
+                  { v: "quotes", icon: FileText, label: "Quotations" },
+                  { v: "references", icon: Globe, label: "References" },
+                  { v: "messages", icon: MessageSquareText, label: "Instructions & Messages" },
                 ].map((t) => (
                   <TabsTrigger
                     key={t.v}
                     value={t.v}
                     aria-label={t.label}
-                    className={`gap-2 rounded-xl px-3 py-2 text-sm font-medium text-slate-600 ${t.active} data-[state=active]:text-white`}
+                    className="gap-2 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-none"
                   >
                     <t.icon className="h-4 w-4" />
                     <span className="hidden sm:inline">{t.label}</span>
@@ -273,8 +262,8 @@ export default function Home() {
         ) : null}
       </main>
 
-      <footer className="relative z-[1] mt-auto border-t bg-white/60 py-4 backdrop-blur">
-        <div className="mx-auto max-w-7xl px-4 text-center text-xs text-slate-500">
+      <footer className="relative mt-auto border-t bg-card py-4">
+        <div className="mx-auto max-w-7xl px-4 text-center text-xs text-muted-foreground">
           Orders live in your dashboard database (editable in the Orders tab). Quotes &amp; references auto-sync with
           your Google Sheet every 5 minutes.{source ? ` Source: ${source}.` : ""}
         </div>

@@ -34,7 +34,7 @@ export default function Instructions({ data }: { data: DashboardData }) {
       <Card className="lg:col-span-3">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
-            <BookOpen className="h-5 w-5 text-rose-500" /> Instruction Sheets
+            <BookOpen className="h-5 w-5 text-primary" aria-hidden="true" /> Instruction Sheets
           </CardTitle>
           <CardDescription>
             {data.instructions.length} sections · {totalItems} how-to documents to send clients when requesting platform
@@ -66,11 +66,11 @@ export default function Instructions({ data }: { data: DashboardData }) {
                           href={item.link}
                           target="_blank"
                           rel="noreferrer"
-                          className="group flex items-start gap-2 rounded-lg border bg-white p-2.5 transition-colors hover:border-rose-300 hover:bg-rose-50/40"
+                          className="group flex items-start gap-2 rounded-lg border bg-card p-2.5 transition-colors hover:border-teal-500 hover:bg-accent/60"
                         >
-                          <ExternalLink className="mt-0.5 h-4 w-4 shrink-0 text-slate-300 group-hover:text-rose-500" />
+                          <ExternalLink className="mt-0.5 h-4 w-4 shrink-0 text-stone-300 group-hover:text-teal-700" />
                           <div className="min-w-0">
-                            <p className="text-sm font-medium leading-snug text-slate-700 group-hover:text-rose-700">
+                            <p className="text-sm font-medium leading-snug text-foreground group-hover:text-teal-800">
                               {item.title}
                             </p>
                             {item.note && <p className="mt-0.5 text-xs italic text-amber-700">{item.note}</p>}
@@ -83,7 +83,7 @@ export default function Instructions({ data }: { data: DashboardData }) {
               ))}
             </Accordion>
           ) : (
-            <p className="py-8 text-center text-sm text-slate-400">
+            <p className="py-8 text-center text-sm text-muted-foreground">
               No instruction sheets found in the sheet yet.
             </p>
           )}
@@ -151,7 +151,7 @@ function MessagesBoard() {
     <Card className="flex flex-col lg:col-span-2">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-base">
-          <MessageSquareText className="h-5 w-5 text-fuchsia-500" /> Team Messages
+          <MessageSquareText className="h-5 w-5 text-primary" aria-hidden="true" /> Team Messages
         </CardTitle>
         <CardDescription>Share notes, instructions and reminders with the whole team</CardDescription>
       </CardHeader>
@@ -176,7 +176,7 @@ function MessagesBoard() {
           <Button
             onClick={post}
             disabled={posting}
-            className="w-full bg-gradient-to-r from-fuchsia-600 to-rose-500 text-white hover:opacity-90"
+            className="w-full"
           >
             <Send className="mr-1.5 h-4 w-4" />
             {posting ? "Posting…" : "Post message"}
@@ -190,25 +190,26 @@ function MessagesBoard() {
             ))}
           </div>
         ) : messages.length ? (
-          <div className="max-h-[420px] min-h-0 flex-1 overflow-auto rounded-md border">
-            <div className="space-y-2 p-3">
+          /* borderless scroll region — message rows carry the only boxes (two levels deep, no card-in-card) */
+          <div className="max-h-[420px] min-h-0 flex-1 overflow-auto pr-1">
+            <div className="space-y-2">
               {messages.map((m) => (
-                <div key={m.id} className="flex gap-2.5 rounded-xl border bg-white p-3">
+                <div key={m.id} className="flex gap-2.5 rounded-xl border bg-card p-3">
                   <div
                     aria-hidden="true"
-                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-fuchsia-500 to-rose-500 text-xs font-bold text-white"
+                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-stone-800 text-xs font-bold text-stone-50"
                   >
                     {m.author.slice(0, 2).toUpperCase()}
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between gap-2">
-                      <p className="flex items-center gap-1 text-sm font-semibold text-slate-800">
-                        <User className="h-3 w-3 text-slate-400" />
+                      <p className="flex items-center gap-1 text-sm font-semibold text-foreground">
+                        <User className="h-3 w-3 text-muted-foreground" />
                         {m.author}
                       </p>
-                      <span className="shrink-0 text-[10px] text-slate-400">{timeAgo(m.createdAt)}</span>
+                      <span className="shrink-0 text-[10px] text-muted-foreground">{timeAgo(m.createdAt)}</span>
                     </div>
-                    <p className="mt-0.5 whitespace-pre-wrap text-sm leading-relaxed text-slate-600">{m.content}</p>
+                    <p className="mt-0.5 whitespace-pre-wrap text-sm leading-relaxed text-foreground/80">{m.content}</p>
                   </div>
                 </div>
               ))}
@@ -216,8 +217,8 @@ function MessagesBoard() {
           </div>
         ) : (
           <div className="flex flex-1 flex-col items-center justify-center gap-2 rounded-md border border-dashed py-10 text-center">
-            <StickyNote className="h-8 w-8 text-slate-300" />
-            <p className="text-sm text-slate-400">No messages yet — be the first to post one!</p>
+            <StickyNote className="h-8 w-8 text-stone-300" aria-hidden="true" />
+            <p className="text-sm text-muted-foreground">No messages yet — be the first to post one!</p>
           </div>
         )}
       </CardContent>
