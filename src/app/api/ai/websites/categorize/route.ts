@@ -21,12 +21,12 @@ export const maxDuration = 90;
 
 const BATCH_SIZE = 15;
 const MAX_BATCHES_PER_CALL = 4;
-/** Stay under Vercel's 90s function limit. A batch that starts here can still
- * run to the internal deadline, and every applied result costs a DB write
- * (ensureSchema + findFirst + upsert ≈ 0.3–1s each), so the budget must leave
- * room for writes + the response AFTER the deadline fires: 35s gate + 72s
- * deadline + ~10s of writes ≈ 82s worst case. */
-const TIME_BUDGET_MS = 35_000;
+/** Every phase of POST() — sheet sync, AI batches, DB writes — is measured
+ * against ONE absolute deadline anchored at REQUEST start (see deadline in
+ * POST). A batch is only started when ≥25s of that window remains, so the
+ * whole function stays inside Vercel's 90s limit: 72s deadline + ~10s of
+ * trailing writes ≈ 82s worst case. */
+const MIN_BATCH_WINDOW_MS = 25_000;
 
 function candidates(refs: RefSite[]): RefSite[] {
   return refs.filter((r) => isGenericBusiness(r.businessCategory) || !isValidWebsiteCategory(r.websiteCategory));
@@ -130,6 +130,12 @@ Return ONLY a compact JSON array (no markdown fences): [{"i": <index>, "website"
 }
 
 export async function POST() {
+  const startedAt = Date.now();
+  // hard ceiling for ANY work in this function — anchored at REQUEST start
+  // because loadDashboardData (sheet download + DB sync) can eat 10–20s BEFORE
+  // the AI starts. Anchoring after it let sync + 72s + writes overrun the 90s
+  // window (seen live: FUNCTION_INVOCATION_TIMEOUT). 72s + trailing writes ≈ 82s.
+  const deadline = startedAt + 72_000;
   try {
     if (!aiConfigured()) {
       return NextResponse.json(
@@ -148,14 +154,11 @@ export async function POST() {
     const applied: Array<{ url: string; websiteCategory: string; businessCategory: string }> = [];
     let processed = 0;
     let warning = "";
-    const startedAt = Date.now();
-    // hard ceiling for any batch attempt — keeps the worst failing batch well
-    // inside Vercel's 90s window even when every model in both chains fails
-    // (was 80s: writes pushed the total past the platform kill)
-    const deadline = startedAt + 72_000;
 
     for (let b = 0; b < MAX_BATCHES_PER_CALL && processed < all.length; b++) {
-      if (Date.now() - startedAt > TIME_BUDGET_MS) break; // out of time — remaining count tells the user to click again
+      // not enough of the request window left for one meaningful batch — the
+      // remaining count tells the user to click again
+      if (deadline - Date.now() < MIN_BATCH_WINDOW_MS) break;
       const batch = all.slice(b * BATCH_SIZE, (b + 1) * BATCH_SIZE);
       if (!batch.length) break;
       try {
