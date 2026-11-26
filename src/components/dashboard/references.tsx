@@ -21,6 +21,16 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -112,9 +122,11 @@ function Pill({
 }) {
   return (
     <button
+      type="button"
       onClick={onClick}
       title={title}
-      className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
+      aria-pressed={active}
+      className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-1 ${
         active
           ? "border-teal-600 bg-teal-600 text-white shadow-sm"
           : "border-slate-200 bg-white text-slate-600 hover:border-teal-400 hover:text-teal-700"
@@ -163,18 +175,33 @@ function BusinessPicker({
         }}
         onFocus={() => setOpen(true)}
         onBlur={() => window.setTimeout(() => setOpen(false), 150)}
+        onKeyDown={(e) => {
+          if (e.key === "Escape") setOpen(false);
+        }}
+        aria-label="Business name category"
+        aria-expanded={open && matches.length > 0}
+        role="combobox"
+        aria-controls="business-suggestions"
         placeholder={placeholder ?? "e.g. cleaning service, bakery shop, X News Paper…"}
         autoComplete="off"
       />
       {open && matches.length > 0 && (
-        <div className="absolute z-50 mt-1 max-h-56 w-full overflow-auto rounded-md border bg-white shadow-lg">
+        <div id="business-suggestions" role="listbox" className="absolute z-50 mt-1 max-h-56 w-full overflow-auto rounded-md border bg-white shadow-lg">
           {matches.map((b) => (
             <button
               key={b}
               type="button"
-              className="block w-full px-3 py-1.5 text-left text-sm text-slate-700 hover:bg-teal-50 hover:text-teal-800"
+              role="option"
+              aria-selected={text === b}
+              className="block w-full px-3 py-1.5 text-left text-sm text-slate-700 hover:bg-teal-50 hover:text-teal-800 focus-visible:bg-teal-50 focus-visible:text-teal-800 focus-visible:outline-none"
               onMouseDown={(e) => {
                 e.preventDefault();
+                setText(b);
+                onChange(b);
+                setOpen(false);
+              }}
+              onClick={() => {
+                // keyboard path — Enter/Space fires click, not mousedown
                 setText(b);
                 onChange(b);
                 setOpen(false);
@@ -209,13 +236,14 @@ function LabelChips({
             key={label}
             type="button"
             onClick={() => onToggle(label)}
-            className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
+            aria-pressed={active}
+            className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 ${
               active
                 ? "border-amber-500 bg-amber-500 text-white shadow-sm"
                 : "border-slate-200 bg-white text-slate-600 hover:border-amber-400 hover:text-amber-700"
             }`}
           >
-            <Tag className="mr-1 inline h-3 w-3" />
+            <Tag className="mr-1 inline h-3 w-3" aria-hidden="true" />
             {label}
           </button>
         );
@@ -244,6 +272,13 @@ export default function References({ data, reload }: { data: DashboardData; relo
   const [newBusiness, setNewBusiness] = useState("");
   const [newLabels, setNewLabels] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
+
+  // ── delete confirmation ──
+  const [deletingSite, setDeletingSite] = useState<RefSite | null>(null);
+
+  // ── show-more pagination (renders 60 cards at a time, keeps the DOM small) ──
+  const REF_PAGE = 60;
+  const [shownCount, setShownCount] = useState(REF_PAGE);
 
   // ── edit dialog state ──
   const [editSite, setEditSite] = useState<RefSite | null>(null);
@@ -564,15 +599,18 @@ export default function References({ data, reload }: { data: DashboardData; relo
     setWebsiteCat("All");
     setBusinessCat("All");
     setLabelFilter("All");
+    setShownCount(REF_PAGE);
   };
   const pickWebsite = (t: string) => {
     setWebsiteCat(t);
     setBusinessCat("All");
     setLabelFilter("All");
+    setShownCount(REF_PAGE);
   };
   const pickBusiness = (b: string) => {
     setBusinessCat(b);
     setLabelFilter("All");
+    setShownCount(REF_PAGE);
   };
   const clearAll = () => {
     setPlatform("All");
@@ -580,6 +618,7 @@ export default function References({ data, reload }: { data: DashboardData; relo
     setBusinessCat("All");
     setLabelFilter("All");
     setQ("");
+    setShownCount(REF_PAGE);
   };
   const hasFilters =
     platform !== "All" || websiteCat !== "All" || businessCat !== "All" || labelFilter !== "All" || q.trim() !== "";
@@ -651,6 +690,7 @@ export default function References({ data, reload }: { data: DashboardData; relo
           <Textarea
             value={requirement}
             onChange={(e) => setRequirement(e.target.value)}
+            aria-label="Describe the client requirement"
             placeholder="e.g. Client runs a jewelry business on Shopify and wants a clean, elegant store…"
             rows={3}
           />
@@ -802,10 +842,10 @@ export default function References({ data, reload }: { data: DashboardData; relo
             </div>
           </div>
 
-          {/* Level 1 — CMS Category */}
+            {/* Level 1 — CMS Category */}
           <div className="space-y-2 pt-2">
-            <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
-              1 · CMS Category (Platform)
+            <p className="text-[11px] font-semibold text-slate-400">
+              1. CMS category (platform)
             </p>
             <div className="flex flex-wrap gap-2">
               {platformOptions.map(([p, count]) => (
@@ -818,8 +858,8 @@ export default function References({ data, reload }: { data: DashboardData; relo
 
           {/* Level 2 — Website Category */}
           <div className="space-y-2 pt-1">
-            <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
-              2 · Website Category
+            <p className="text-[11px] font-semibold text-slate-400">
+              2. Website category
             </p>
             <div className="flex flex-wrap gap-2">
               {websiteOptions.map(([w, count]) => (
@@ -838,8 +878,8 @@ export default function References({ data, reload }: { data: DashboardData; relo
           {/* Level 3 — Business Name Category */}
           <div className="flex flex-wrap items-end gap-3 pt-1">
             <div className="min-w-[260px] space-y-1.5">
-              <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
-                3 · Business Name Category
+              <p className="text-[11px] font-semibold text-slate-400">
+                3. Business name category
               </p>
               <Select value={businessCat} onValueChange={pickBusiness}>
                 <SelectTrigger className="h-9 w-full bg-white">
@@ -855,15 +895,26 @@ export default function References({ data, reload }: { data: DashboardData; relo
               </Select>
             </div>
             <div className="relative max-w-xs flex-1 pt-[18px]">
-              <Search className="absolute left-2.5 top-[30px] h-4 w-4 text-slate-400" />
-              <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search business, category, label or URL…" className="pl-8" />
+              <Search className="absolute left-2.5 top-[30px] h-4 w-4 text-slate-400" aria-hidden="true" />
+              <Input
+                type="search"
+                value={q}
+                onChange={(e) => {
+                  setQ(e.target.value);
+                  setShownCount(REF_PAGE);
+                }}
+                aria-label="Search the reference library"
+                autoComplete="off"
+                placeholder="Search business, category, label or URL…"
+                className="pl-8"
+              />
             </div>
           </div>
 
           {/* Level 4 — Big-client labels */}
           <div className="space-y-2 pt-1">
-            <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
-              4 · Labels (Big-Client Hunting)
+            <p className="text-[11px] font-semibold text-slate-400">
+              4. Labels (big-client hunting)
             </p>
             <div className="flex flex-wrap gap-2">
               {labelOptions.map(([l, count]) => (
@@ -876,16 +927,18 @@ export default function References({ data, reload }: { data: DashboardData; relo
         </CardHeader>
         <CardContent>
           <p className="mb-2 text-xs text-slate-500">
-            Showing <span className="font-semibold text-teal-700">{filtered.length}</span> of {data.references.length} websites
-            {platform !== "All" ? ` · ${platform}` : ""}
+            Showing <span className="font-semibold tabular-nums text-teal-700">{Math.min(shownCount, filtered.length)}</span> of{" "}
+            <span className="tabular-nums">{filtered.length}</span> websites
+            {platform !== "All" ? ` in ${platform}` : ""}
             {websiteCat !== "All" ? ` · ${shortWebsiteCategory(websiteCat)}` : ""}
             {businessCat !== "All" ? ` · ${businessCat}` : ""}
             {labelFilter !== "All" ? ` · ${labelFilter}` : ""}
           </p>
           {filtered.length ? (
+            <>
             <div className="max-h-[520px] overflow-auto rounded-md border">
               <div className="grid gap-2 p-3 md:grid-cols-2 xl:grid-cols-3">
-                {filtered.map((r) => (
+                {filtered.slice(0, shownCount).map((r) => (
                   <div
                     key={r.url}
                     className="group relative flex items-start justify-between gap-2 rounded-lg border bg-white p-2.5 transition-colors hover:border-teal-400 hover:bg-teal-50/40"
@@ -899,7 +952,7 @@ export default function References({ data, reload }: { data: DashboardData; relo
                       <p className="truncate text-sm font-medium text-slate-700">
                         {r.businessCategory}
                         {r.custom && (
-                          <span className="ml-1.5 rounded-full border border-rose-200 bg-rose-50 px-1.5 py-0.5 align-middle text-[9px] font-semibold uppercase tracking-wide text-rose-600">
+                          <span className="ml-1.5 rounded-full border border-rose-200 bg-rose-50 px-1.5 py-0.5 align-middle text-[9px] font-semibold text-rose-600">
                             added
                           </span>
                         )}
@@ -930,30 +983,42 @@ export default function References({ data, reload }: { data: DashboardData; relo
                       </div>
                       <div className="flex items-center gap-1">
                         <button
+                          type="button"
                           onClick={() => openEditDialog(r)}
+                          aria-label={`Change category and labels of ${hostOf(r.url)}`}
                           title="Change category & labels"
-                          className="rounded-full border border-slate-200 bg-white p-1 text-slate-400 transition-colors hover:border-teal-400 hover:text-teal-600"
+                          className="rounded-full border border-slate-200 bg-white p-1.5 text-slate-400 transition-colors hover:border-teal-400 hover:text-teal-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500"
                         >
-                          <Pencil className="h-3 w-3" />
+                          <Pencil className="h-3 w-3" aria-hidden="true" />
                         </button>
                         {r.custom && (
                           <button
-                            onClick={() => deleteWebsite(r)}
+                            type="button"
+                            onClick={() => setDeletingSite(r)}
+                            aria-label={`Remove ${hostOf(r.url)} from the library`}
                             title="Remove this website"
-                            className="rounded-full border border-rose-200 bg-white p-1 text-rose-400 transition-colors hover:border-rose-400 hover:text-rose-600"
+                            className="rounded-full border border-rose-200 bg-white p-1.5 text-rose-400 transition-colors hover:border-rose-400 hover:text-rose-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400"
                           >
-                            <Trash2 className="h-3 w-3" />
+                            <Trash2 className="h-3 w-3" aria-hidden="true" />
                           </button>
                         )}
-                        <a href={r.url} target="_blank" rel="noreferrer" tabIndex={-1}>
+                        <span aria-hidden="true">
                           <ExternalLink className="h-3.5 w-3.5 text-slate-300 group-hover:text-teal-600" />
-                        </a>
+                        </span>
                       </div>
                     </div>
                   </div>
                 ))}
               </div>
             </div>
+            {filtered.length > shownCount && (
+              <div className="mt-3 text-center">
+                <Button variant="outline" size="sm" onClick={() => setShownCount((c) => c + REF_PAGE)}>
+                  Show more ({filtered.length - shownCount} remaining)
+                </Button>
+              </div>
+            )}
+            </>
           ) : (
             <p className="py-8 text-center text-sm text-slate-400">No references match your filter.</p>
           )}
@@ -977,9 +1042,14 @@ export default function References({ data, reload }: { data: DashboardData; relo
               <Label htmlFor="site-url">Website URL</Label>
               <Input
                 id="site-url"
+                name="url"
+                type="url"
+                inputMode="url"
+                autoComplete="off"
+                spellCheck={false}
                 value={newUrl}
                 onChange={(e) => onUrlChange(e.target.value)}
-                placeholder="https://example.myshopify.com/..."
+                placeholder="https://example.myshopify.com/…"
               />
             </div>
             <div className="space-y-1.5">
@@ -1112,7 +1182,7 @@ export default function References({ data, reload }: { data: DashboardData; relo
 
             <div className="relative">
               <div className="absolute inset-x-0 -top-2 text-center">
-                <span className="bg-white px-2 text-[11px] uppercase tracking-wide text-slate-400">or paste CSV text</span>
+                <span className="bg-white px-2 text-[11px] text-slate-400">or paste CSV text</span>
               </div>
               <Textarea
                 value={pasteCsv}
@@ -1139,7 +1209,7 @@ export default function References({ data, reload }: { data: DashboardData; relo
 
             {/* result summary */}
             {importResult && (
-              <div className="space-y-2 rounded-lg border p-3 text-sm">
+              <div aria-live="polite" className="space-y-2 rounded-lg border p-3 text-sm">
                 <div className="flex flex-wrap gap-x-4 gap-y-1">
                   <span className="font-medium text-emerald-700">{importResult.imported} imported</span>
                   {importResult.alreadyInLibrary > 0 && (
@@ -1182,6 +1252,32 @@ export default function References({ data, reload }: { data: DashboardData; relo
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* ── Delete confirmation — destructive action is never immediate ── */}
+      <AlertDialog open={!!deletingSite} onOpenChange={(open) => !open && setDeletingSite(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove this website?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {deletingSite ? `${deletingSite.platform} · ${hostOf(deletingSite.url)}` : ""} will be removed from your
+              library. This cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                const target = deletingSite;
+                setDeletingSite(null);
+                if (target) void deleteWebsite(target);
+              }}
+              className="bg-rose-600 text-white hover:bg-rose-700"
+            >
+              Remove
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Platform sales guide */}
       {data.guide.length > 0 && (

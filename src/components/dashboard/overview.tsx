@@ -198,9 +198,9 @@ export default function Overview({ data }: Props) {
             key={c.label}
             className={`relative overflow-hidden rounded-2xl bg-gradient-to-br ${c.cls} p-4 text-white shadow-md transition-transform hover:scale-[1.02]`}
           >
-            <c.icon className="absolute right-3 top-3 h-8 w-8 text-white/30" />
-            <p className="pr-9 text-xs font-medium uppercase tracking-wide text-white/80">{c.label}</p>
-            <p className="mt-1 text-2xl font-bold">{c.value}</p>
+            <c.icon className="absolute right-3 top-3 h-8 w-8 text-white/30" aria-hidden="true" />
+            <p className="pr-9 text-xs font-medium text-white/85">{c.label}</p>
+            <p className="mt-1 text-2xl font-bold tabular-nums">{c.value}</p>
             <p className="mt-0.5 text-xs text-white/75">{c.sub}</p>
             {typeof c.progress === "number" && (
               <div className="mt-2">
@@ -257,7 +257,7 @@ export default function Overview({ data }: Props) {
                 key={t.display}
                 className="rounded-xl border border-indigo-100 bg-white/80 p-3 text-center shadow-sm"
               >
-                <p className="truncate text-xs font-semibold uppercase tracking-wide text-slate-500">{t.display}</p>
+                <p className="truncate text-xs font-semibold text-slate-500">{t.display}</p>
                 <p className={`mt-0.5 text-2xl font-bold ${t.count ? "text-indigo-700" : "text-slate-300"}`}>
                   {t.count}
                 </p>
@@ -273,10 +273,10 @@ export default function Overview({ data }: Props) {
           {/* platform breakdown chips */}
           {platformCounts.length > 0 && (
             <div className="flex flex-wrap items-center gap-2 pt-1">
-              <span className="text-[11px] font-medium uppercase tracking-wide text-slate-400">By platform:</span>
+              <span className="text-[11px] font-medium text-slate-400">By platform</span>
               {platformCounts.map((p) => (
                 <Badge key={p.display} className="border-0 bg-indigo-100 text-indigo-800 hover:bg-indigo-100">
-                  {p.display} · {p.count}
+                  {p.display} ({p.count})
                 </Badge>
               ))}
             </div>
@@ -293,8 +293,8 @@ export default function Overview({ data }: Props) {
           { label: "Brief-sourced sales", value: money(data.funnel.briefRevenue), sub: data.funnel.briefOrders + " orders via Brief/Invitation", cls: "from-sky-500 to-blue-600" },
         ].map((c) => (
           <div key={c.label} className={`relative overflow-hidden rounded-xl bg-gradient-to-br ${c.cls} p-3.5 text-white shadow-sm transition-transform hover:scale-[1.02]`}>
-            <p className="text-[11px] font-medium uppercase tracking-wide text-white/80">{c.label}</p>
-            <p className="mt-0.5 text-xl font-bold">{c.value}</p>
+            <p className="text-[11px] font-medium text-white/85">{c.label}</p>
+            <p className="mt-0.5 text-xl font-bold tabular-nums">{c.value}</p>
             <p className="text-[10px] text-white/75">{c.sub}</p>
           </div>
         ))}

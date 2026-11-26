@@ -54,8 +54,10 @@ function TeamChip({
 }) {
   return (
     <button
+      type="button"
       onClick={onClick}
-      className={`inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-colors ${
+      aria-pressed={active}
+      className={`inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 focus-visible:ring-offset-1 ${
         active
           ? "border-violet-600 bg-violet-600 text-white shadow-sm"
           : "border-slate-200 bg-white text-slate-600 hover:border-violet-400 hover:text-violet-700"
@@ -191,8 +193,8 @@ export default function Members({ data }: { data: DashboardData }) {
 
       {/* ── Team filter ── */}
       <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-violet-100 bg-white/80 px-4 py-3 shadow-sm backdrop-blur">
-        <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500">
-          <UsersRound className="h-4 w-4 text-violet-500" /> Team filter
+        <span className="flex items-center gap-1.5 text-xs font-semibold text-slate-500">
+          <UsersRound className="h-4 w-4 text-violet-500" aria-hidden="true" /> Team filter
         </span>
         <div className="flex flex-wrap gap-2">
           <TeamChip active={teamFilter === "all"} onClick={() => setTeamFilter("all")}>
@@ -235,7 +237,7 @@ export default function Members({ data }: { data: DashboardData }) {
                 </div>
                 <div className="h-7 flex-1 overflow-hidden rounded-lg bg-slate-100">
                   <div
-                    className={`h-full rounded-lg bg-gradient-to-r ${s.color} transition-all`}
+                    className={`h-full rounded-lg bg-gradient-to-r ${s.color} transition-[width] duration-500`}
                     style={{ width: `${s.widthPct}%` }}
                   />
                 </div>
@@ -251,7 +253,7 @@ export default function Members({ data }: { data: DashboardData }) {
               </div>
               <div className="h-7 flex-1 overflow-hidden rounded-lg bg-slate-100">
                 <div
-                  className="h-full rounded-lg bg-gradient-to-r from-amber-500 to-orange-600 transition-all"
+                  className="h-full rounded-lg bg-gradient-to-r from-amber-500 to-orange-600 transition-[width] duration-500"
                   style={{ width: `${Math.max(Math.min((funnel.queryRevenue / Math.max(totalRevenueHint, 1)) * 100, 100), 2)}%` }}
                 />
               </div>
@@ -398,11 +400,20 @@ export default function Members({ data }: { data: DashboardData }) {
                   {head.map((h) => (
                     <TableHead
                       key={h.label}
-                      onClick={() => toggleSort(h.key)}
-                      className={h.key ? "cursor-pointer select-none hover:text-violet-700" : ""}
+                      aria-sort={h.key && h.key === sortKey ? (asc ? "ascending" : "descending") : undefined}
                     >
-                      {h.label}
-                      {h.key === sortKey ? (asc ? " ↑" : " ↓") : ""}
+                      {h.key ? (
+                        <button
+                          type="button"
+                          onClick={() => toggleSort(h.key)}
+                          className="inline-flex items-center gap-0.5 rounded font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400"
+                        >
+                          {h.label}
+                          <span aria-hidden="true">{h.key === sortKey ? (asc ? " ↑" : " ↓") : ""}</span>
+                        </button>
+                      ) : (
+                        h.label
+                      )}
                     </TableHead>
                   ))}
                 </TableRow>
@@ -417,7 +428,7 @@ export default function Members({ data }: { data: DashboardData }) {
                         <span className="inline-flex items-center gap-1.5">
                           {m.name}
                           {m.name === topPerformer?.name && topPerformer.achievement > 0 && (
-                            <Award className="h-4 w-4 text-amber-500" />
+                            <Award className="h-4 w-4 text-amber-500" aria-hidden="true" />
                           )}
                           {m.placeholder && (
                             <span className="rounded-full border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-[10px] font-normal text-slate-400">
@@ -426,10 +437,10 @@ export default function Members({ data }: { data: DashboardData }) {
                           )}
                         </span>
                       </TableCell>
-                      <TableCell>{m.hasTarget ? money(m.target) : "—"}</TableCell>
-                      <TableCell className="font-semibold text-emerald-700">{money(m.achievement)}</TableCell>
-                      <TableCell className="text-lime-700">{money(m.green)}</TableCell>
-                      <TableCell className="text-amber-700">{money(m.yellow)}</TableCell>
+                      <TableCell className="tabular-nums">{m.hasTarget ? money(m.target) : "—"}</TableCell>
+                      <TableCell className="font-semibold tabular-nums text-emerald-700">{money(m.achievement)}</TableCell>
+                      <TableCell className="tabular-nums text-lime-700">{money(m.green)}</TableCell>
+                      <TableCell className="tabular-nums text-amber-700">{money(m.yellow)}</TableCell>
                       <TableCell className="min-w-[140px]">
                         {m.hasTarget ? (
                           <div className="flex items-center gap-2">
@@ -450,9 +461,9 @@ export default function Members({ data }: { data: DashboardData }) {
                           "—"
                         )}
                       </TableCell>
-                      <TableCell>{m.orders}</TableCell>
-                      <TableCell>{m.queries || "—"}</TableCell>
-                      <TableCell className="font-medium text-amber-700">
+                      <TableCell className="tabular-nums">{m.orders}</TableCell>
+                      <TableCell className="tabular-nums">{m.queries || "—"}</TableCell>
+                      <TableCell className="font-medium tabular-nums text-amber-700">
                         {m.queryRevenue ? money(m.queryRevenue) : "—"}
                       </TableCell>
                       <TableCell>

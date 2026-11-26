@@ -120,6 +120,13 @@ export default function Home() {
 
   return (
     <div className="relative flex min-h-screen flex-col bg-gradient-to-br from-violet-50 via-white to-amber-50">
+      {/* skip link — keyboard users reach the content without tabbing the header */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-violet-700 focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-white"
+      >
+        Skip to content
+      </a>
       {/* ambient background blobs */}
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
         <div className="absolute -left-40 top-1/4 h-96 w-96 rounded-full bg-fuchsia-200/25 blur-3xl" />
@@ -151,20 +158,20 @@ export default function Home() {
               <>
                 <div className="hidden items-center gap-3 rounded-2xl bg-white/15 px-4 py-2 text-sm backdrop-blur md:flex">
                   <div>
-                    <p className="text-[10px] uppercase tracking-wide text-white/70">Achievement</p>
-                    <p className="font-bold">{money(data.kpis.achievement)}</p>
+                    <p className="text-[11px] text-white/75">Achievement</p>
+                    <p className="font-bold tabular-nums">{money(data.kpis.achievement)}</p>
                   </div>
                   <div className="h-6 w-px bg-white/25" />
                   <div>
-                    <p className="text-[10px] uppercase tracking-wide text-white/70">Queries</p>
-                    <p className="font-bold">
-                      {data.funnel.queries} · {Math.round(data.funnel.convRate * 100)}%
+                    <p className="text-[11px] text-white/75">Queries</p>
+                    <p className="font-bold tabular-nums">
+                      {data.funnel.queries} ({Math.round(data.funnel.convRate * 100)}%)
                     </p>
                   </div>
                   <div className="h-6 w-px bg-white/25" />
                   <div>
-                    <p className="text-[10px] uppercase tracking-wide text-white/70">Orders</p>
-                    <p className="font-bold">{data.kpis.totalOrders}</p>
+                    <p className="text-[11px] text-white/75">Orders</p>
+                    <p className="font-bold tabular-nums">{data.kpis.totalOrders}</p>
                   </div>
                 </div>
                 <Badge variant="secondary" className="bg-white/20 text-white hover:bg-white/20">
@@ -177,7 +184,7 @@ export default function Home() {
               className="bg-white/20 text-white hover:bg-white/20"
               title={source}
             >
-              <span className="relative mr-1.5 flex h-2 w-2">
+              <span aria-hidden="true" className="relative mr-1.5 flex h-2 w-2">
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-300 opacity-75" />
                 <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-300" />
               </span>
@@ -196,7 +203,7 @@ export default function Home() {
         </div>
       </header>
 
-      <main className="relative z-[1] mx-auto w-full max-w-7xl flex-1 px-4 py-6">
+      <main id="main-content" className="relative z-[1] mx-auto w-full max-w-7xl flex-1 px-4 py-6">
         {error && (
           <Alert variant="destructive" className="mb-6">
             <AlertTitle>Sync failed</AlertTitle>
@@ -234,6 +241,7 @@ export default function Home() {
                   <TabsTrigger
                     key={t.v}
                     value={t.v}
+                    aria-label={t.label}
                     className={`gap-2 rounded-xl px-3 py-2 text-sm font-medium text-slate-600 ${t.active} data-[state=active]:text-white`}
                   >
                     <t.icon className="h-4 w-4" />
@@ -267,8 +275,8 @@ export default function Home() {
 
       <footer className="relative z-[1] mt-auto border-t bg-white/60 py-4 backdrop-blur">
         <div className="mx-auto max-w-7xl px-4 text-center text-xs text-slate-500">
-          Web Genius AI Dashboard · orders live in your dashboard database (editable in the Orders tab) · quotes & references auto-sync every 5 minutes with your Google Sheet
-          {source ? ` · source: ${source}` : ""}
+          Orders live in your dashboard database (editable in the Orders tab). Quotes &amp; references auto-sync with
+          your Google Sheet every 5 minutes.{source ? ` Source: ${source}.` : ""}
         </div>
       </footer>
     </div>

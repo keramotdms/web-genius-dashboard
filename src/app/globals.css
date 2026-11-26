@@ -136,3 +136,25 @@
 ::-webkit-scrollbar-thumb:hover {
   background: #c3b4ec;
 }
+
+/* ── Interface-quality baseline (web-interface-guidelines + Hallmark floor) ── */
+html {
+  color-scheme: light;
+  overflow-x: clip;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+body {
+  overflow-x: clip;
+}
+/* Honor prefers-reduced-motion for every CSS animation (ping, spin, pulse…) */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

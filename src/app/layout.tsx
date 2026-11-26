@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
@@ -23,17 +23,21 @@ export const metadata: Metadata = {
     icon: "https://z-cdn.chatglm.cn/z-ai/static/logo.svg",
   },
   openGraph: {
-    title: "Z.ai Code Scaffold",
-    description: "AI-powered development with modern React stack",
-    url: "https://chat.z.ai",
-    siteName: "Z.ai",
+    title: "Web Genius AI Dashboard",
+    description: "AI-powered sales dashboard synced with Google Sheets: month targets, member performance, quotation templates, reference websites and instruction sheets.",
+    siteName: "Web Genius AI Dashboard",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Z.ai Code Scaffold",
-    description: "AI-powered development with modern React stack",
+    title: "Web Genius AI Dashboard",
+    description: "AI-powered sales dashboard synced with Google Sheets.",
   },
+};
+
+/** Matches the violet-700 header so mobile browser chrome blends with the page. */
+export const viewport: Viewport = {
+  themeColor: "#6d28d9",
 };
 
 export default function RootLayout({

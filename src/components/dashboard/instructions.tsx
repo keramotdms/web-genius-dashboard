@@ -157,10 +157,19 @@ function MessagesBoard() {
       </CardHeader>
       <CardContent className="flex flex-1 flex-col gap-4">
         <div className="space-y-2">
-          <Input value={author} onChange={(e) => setAuthor(e.target.value)} placeholder="Your name" />
+          <Input
+            value={author}
+            onChange={(e) => setAuthor(e.target.value)}
+            name="author"
+            autoComplete="off"
+            aria-label="Your name"
+            placeholder="Your name…"
+          />
           <Textarea
             value={content}
             onChange={(e) => setContent(e.target.value)}
+            name="message"
+            aria-label="Message"
             placeholder="Write a message… (e.g. 'Client meeting at 5pm, prepare Shopify quote')"
             rows={3}
           />
@@ -185,7 +194,10 @@ function MessagesBoard() {
             <div className="space-y-2 p-3">
               {messages.map((m) => (
                 <div key={m.id} className="flex gap-2.5 rounded-xl border bg-white p-3">
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-fuchsia-500 to-rose-500 text-xs font-bold text-white">
+                  <div
+                    aria-hidden="true"
+                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-fuchsia-500 to-rose-500 text-xs font-bold text-white"
+                  >
                     {m.author.slice(0, 2).toUpperCase()}
                   </div>
                   <div className="min-w-0 flex-1">

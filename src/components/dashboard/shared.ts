@@ -12,13 +12,12 @@ export const CHART_COLORS = [
 ];
 
 export function money(n: number, digits = 0): string {
-  return (
-    "$" +
-    n.toLocaleString("en-US", {
-      maximumFractionDigits: digits,
-      minimumFractionDigits: 0,
-    })
-  );
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: digits,
+  }).format(n);
 }
 
 export function shortDate(d: string): string {

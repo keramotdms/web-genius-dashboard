@@ -39,8 +39,11 @@ export default function Quotes({ data }: { data: DashboardData }) {
         <div className="relative w-full sm:w-72">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
           <Input
+            type="search"
             value={q}
             onChange={(e) => setQ(e.target.value)}
+            aria-label="Search quotation templates"
+            autoComplete="off"
             placeholder="Search templates…"
             className="pl-8"
           />
