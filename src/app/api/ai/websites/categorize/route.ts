@@ -21,10 +21,12 @@ export const maxDuration = 90;
 
 const BATCH_SIZE = 15;
 const MAX_BATCHES_PER_CALL = 4;
-/** Stay under Vercel's 90s function limit. Each batch's worst case is ~35s
- * (full OpenRouter throttle loop + full Gemini fallback chain), so the budget
- * must leave room for one more batch AFTER the check fires: 45s + 35s = 80s. */
-const TIME_BUDGET_MS = 45_000;
+/** Stay under Vercel's 90s function limit. A batch that starts here can still
+ * run to the internal deadline, and every applied result costs a DB write
+ * (ensureSchema + findFirst + upsert ≈ 0.3–1s each), so the budget must leave
+ * room for writes + the response AFTER the deadline fires: 35s gate + 72s
+ * deadline + ~10s of writes ≈ 82s worst case. */
+const TIME_BUDGET_MS = 35_000;
 
 function candidates(refs: RefSite[]): RefSite[] {
   return refs.filter((r) => isGenericBusiness(r.businessCategory) || !isValidWebsiteCategory(r.websiteCategory));
@@ -149,7 +151,8 @@ export async function POST() {
     const startedAt = Date.now();
     // hard ceiling for any batch attempt — keeps the worst failing batch well
     // inside Vercel's 90s window even when every model in both chains fails
-    const deadline = startedAt + 80_000;
+    // (was 80s: writes pushed the total past the platform kill)
+    const deadline = startedAt + 72_000;
 
     for (let b = 0; b < MAX_BATCHES_PER_CALL && processed < all.length; b++) {
       if (Date.now() - startedAt > TIME_BUDGET_MS) break; // out of time — remaining count tells the user to click again

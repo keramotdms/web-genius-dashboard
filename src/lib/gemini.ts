@@ -175,6 +175,35 @@ interface OpenRouterResponse {
   choices?: Array<{ message?: { content?: string | null } }>;
 }
 
+/** Fetch + parse under ONE abort deadline that covers BOTH the response headers
+ * AND the body. A slow/hanging upstream body (observed with OpenRouter free
+ * preview models) previously kept the serverless function alive until the
+ * platform's hard kill — the abort timer used to be cleared before the body
+ * was read. Returns a plain object so callers never see throw/catch noise. */
+async function guardedFetch(
+  url: string,
+  init: RequestInit,
+  timeoutMs: number,
+): Promise<{ ok: boolean; status: number; json: unknown; text: string; timedOut: boolean }> {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+  try {
+    const res = await fetch(url, { ...init, signal: ctrl.signal, cache: "no-store" });
+    const text = await res.text(); // body read shares the same deadline
+    let json: unknown;
+    try {
+      json = JSON.parse(text);
+    } catch {
+      /* non-JSON body — callers fall back to .text */
+    }
+    return { ok: res.ok, status: res.status, json, text, timedOut: false };
+  } catch {
+    return { ok: false, status: 0, json: null, text: "", timedOut: true };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 /** One OpenRouter chat completion across the free-model chain. Returns the text or throws the last error.
  * Honours opts.deadlineMs: no attempt starts with <12s of budget left and each
  * attempt's timeout is clamped so the chain can never overrun the window. */
@@ -184,6 +213,7 @@ async function postOpenRouter(key: string, system: string, user: string, opts: G
   // keep a floor comfortably above what the visible answer needs
   const maxTokens = Math.max(opts.maxOutputTokens ?? 900, 1500);
   let lastError = "OpenRouter request failed";
+  let hungOnce = false; // one upstream hung — keep every later attempt short
 
   for (const model of OR_FREE_MODELS) {
     const remaining = opts.deadlineMs ? opts.deadlineMs - Date.now() : Infinity;
@@ -191,12 +221,13 @@ async function postOpenRouter(key: string, system: string, user: string, opts: G
       lastError = `OpenRouter: out of time budget — click again to continue`;
       break;
     }
-    const attemptTimeout = Math.max(8_000, Math.min(timeoutMs, remaining - 2_000));
-    const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), attemptTimeout);
-    let res: Response;
-    try {
-      res = await fetch(`${OR_BASE}/chat/completions`, {
+    // the first model may use the full timeout; after any hang, backups get
+    // at most 15s — a chain of hanging previews must not eat the whole window
+    const cap = hungOnce ? Math.min(timeoutMs, 15_000) : timeoutMs;
+    const attemptTimeout = Math.max(8_000, Math.min(cap, remaining - 2_000));
+    const r = await guardedFetch(
+      `${OR_BASE}/chat/completions`,
+      {
         method: "POST",
         headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -208,27 +239,25 @@ async function postOpenRouter(key: string, system: string, user: string, opts: G
           temperature: opts.temperature ?? 0.4,
           max_tokens: maxTokens,
         }),
-        signal: ctrl.signal,
-        cache: "no-store",
-      });
-    } catch {
+      },
+      attemptTimeout,
+    );
+    if (r.timedOut) {
+      hungOnce = true;
       lastError = `OpenRouter request timed out after ${Math.round(attemptTimeout / 1000)}s (${model})`;
-      clearTimeout(timer);
       continue;
     }
-    clearTimeout(timer);
 
-    if (res.ok) {
-      const json = (await res.json().catch(() => ({}))) as OpenRouterResponse;
+    if (r.ok) {
+      const json = (r.json ?? {}) as OpenRouterResponse;
       const text = (json.choices?.[0]?.message?.content ?? "").trim();
       if (text) return text;
       // reasoning-only models can return all-empty content — try the next one
       lastError = `OpenRouter empty response (${model})`;
       continue;
     }
-    const detail = await res.text().catch(() => "");
-    if (res.status === 429) {
-      const msg = detail.toLowerCase();
+    if (r.status === 429) {
+      const msg = r.text.toLowerCase();
       // Two very different 429s:
       // - "free-models-per-day" — OpenRouter's own shared 50/day cap is done.
       //   (Match ONLY that exact resource name: upstream providers also emit
@@ -243,10 +272,10 @@ async function postOpenRouter(key: string, system: string, user: string, opts: G
         );
       }
       lastError = `OpenRouter upstream rate-limited (${model})`;
-      await new Promise((r) => setTimeout(r, 1200));
+      await new Promise((res) => setTimeout(res, 1200));
       continue;
     }
-    lastError = `OpenRouter HTTP ${res.status} (${model}): ${detail.slice(0, 180)}`;
+    lastError = `OpenRouter HTTP ${r.status} (${model}): ${r.text.slice(0, 180)}`;
   }
   throw new Error(lastError);
 }
@@ -273,30 +302,26 @@ async function postGenerateRaw(key: string, body: Record<string, unknown>, timeo
       const attemptTimeout = Math.max(6_000, Math.min(timeoutMs, remaining - 2_000));
       for (const variant of variants) {
         const payload = body.tools ? { ...body, tools: [{ [variant]: {} }] } : body;
-        const ctrl = new AbortController();
-        const timer = setTimeout(() => ctrl.abort(), attemptTimeout);
-        let res: Response;
-        try {
-          res = await fetch(`${BASE}/${model}:generateContent?key=${key}`, {
+        const r = await guardedFetch(
+          `${BASE}/${model}:generateContent?key=${key}`,
+          {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload),
-            signal: ctrl.signal,
-            cache: "no-store",
-          });
-        } catch {
+          },
+          attemptTimeout,
+        );
+        if (r.timedOut) {
           // AbortError (our timeout) or network error — try the next attempt/model
           timedOut = true;
           lastError = `Gemini request timed out after ${Math.round(attemptTimeout / 1000)}s (${model})`;
           break;
-        } finally {
-          clearTimeout(timer);
         }
         timedOut = false;
-        if (res.ok) return (await res.json()) as GeminiResponse;
-        const detail = await res.text().catch(() => "");
+        if (r.ok && r.json) return r.json as GeminiResponse;
+        const detail = r.text;
 
-        if (res.status === 429) {
+        if (r.status === 429) {
           // Quota is shared across ALL models on the same key — trying other
           // models or retrying just burns the remaining allowance. Stop here
           // with a human-readable message (the raw JSON made scary toasts).
@@ -308,9 +333,9 @@ async function postGenerateRaw(key: string, body: Record<string, unknown>, timeo
           );
         }
 
-        lastError = `Gemini HTTP ${res.status} (${model}): ${detail.slice(0, 180)}`;
+        lastError = `Gemini HTTP ${r.status} (${model}): ${detail.slice(0, 180)}`;
         // swap the grounding-tool spelling only when the request itself was rejected
-        if (res.status !== 400) break;
+        if (r.status !== 400) break;
       }
       const status = Number(lastError.match(/HTTP (\d+)/)?.[1]);
       lastStatus = status;
