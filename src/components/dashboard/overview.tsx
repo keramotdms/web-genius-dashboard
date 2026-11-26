@@ -105,23 +105,31 @@ export default function Overview({ data }: Props) {
     const st = normText(o.status);
     return st !== "" && !IN_WORK_EXCLUDED_STATUSES.includes(st);
   });
-  const cmsInWork = inWorkOrders.filter((o) => CMS_PLATFORMS.includes(normText(o.service)));
 
-  // every team that appears anywhere in the sheet keeps a row (0 when idle)
-  const teamDisplay = new Map<string, string>(); // normalized name -> display name
-  for (const o of data.orders) {
-    const raw = String(o.department ?? "").trim();
-    if (raw) teamDisplay.set(normText(raw), raw);
-  }
-  const teamCounts = new Map<string, number>();
-  for (const o of cmsInWork) {
-    const key = normText(o.department) || "(no team)";
-    teamCounts.set(key, (teamCounts.get(key) ?? 0) + 1);
-    if (!teamDisplay.has(key) && key === "(no team)") teamDisplay.set(key, "(no team)");
-  }
-  const teamRows = [...teamDisplay.entries()]
-    .map(([key, display]) => ({ display, count: teamCounts.get(key) ?? 0 }))
-    .sort((a, b) => b.count - a.count || a.display.localeCompare(b.display));
+  // ONLY these two teams are ever shown — "nothing else" per the manager.
+  // Any other department value in the sheet ("STA_Team_Old", blanks, future
+  // extra rows) is ignored by this widget entirely.
+  const CMS_TEAMS: Array<{ key: string; display: string }> = [
+    { key: "saa_team", display: "SAA_Team" },
+    { key: "sta_team", display: "STA_Team" },
+  ];
+
+  const cmsInWorkTeams = data.orders.filter((o) => {
+    const st = normText(o.status);
+    return (
+      st !== "" &&
+      !IN_WORK_EXCLUDED_STATUSES.includes(st) &&
+      CMS_PLATFORMS.includes(normText(o.service)) &&
+      CMS_TEAMS.some((t) => t.key === normText(o.department))
+    );
+  });
+  const cmsInWork = cmsInWorkTeams; // widget counts ONLY the two teams above
+
+  // exactly two rows, fixed order — SAA_Team then STA_Team
+  const teamRows = CMS_TEAMS.map((t) => ({
+    display: t.display,
+    count: cmsInWork.filter((o) => normText(o.department) === t.key).length,
+  }));
 
   const platformCounts = [...new Set(cmsInWork.map((o) => normText(o.service)))]
     .map((p) => ({
@@ -242,8 +250,8 @@ export default function Overview({ data }: Props) {
           </div>
         </CardHeader>
         <CardContent className="space-y-3">
-          {/* team split */}
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {/* team split — exactly SAA_Team and STA_Team, nothing else */}
+          <div className="grid gap-3 sm:grid-cols-2">
             {teamRows.map((t) => (
               <div
                 key={t.display}
