@@ -215,20 +215,24 @@ async function postOpenRouter(key: string, system: string, user: string, opts: G
   let lastError = "OpenRouter request failed";
   let hungOnce = false; // one upstream hung — keep every later attempt short
   const chainStartedAt = Date.now();
+  /** The whole OpenRouter chain gets ~30s of the request window — free
+   * previews on big batches hang one after another, and burning the WHOLE
+   * window here used to leave the Gemini fallback 6–11s crumbs, which a real
+   * 15-site batch (needs 10–20s) can never fit (seen live). Gemini answers in
+   * 10–20s when its quota is fresh, so it gets everything past this slice. */
+  const CHAIN_BUDGET_MS = 30_000;
 
   for (const model of OR_FREE_MODELS) {
+    const chainLeft = CHAIN_BUDGET_MS - (Date.now() - chainStartedAt);
     const remaining = opts.deadlineMs ? opts.deadlineMs - Date.now() : Infinity;
-    // the chain itself is capped at ~40s: free previews on big batches can
-    // hang one after another, and burning the WHOLE request window here used
-    // to leave the Gemini fallback 0s (seen live: "Gemini request failed")
-    if (remaining < 12_000 || Date.now() - chainStartedAt > 40_000) {
+    if (remaining < 12_000 || chainLeft < 6_000) {
       lastError = `OpenRouter: out of time budget — click again to continue`;
       break;
     }
     // the first model may use the full timeout; after any hang, backups get
     // at most 12s — a chain of hanging previews must not eat the whole window
     const cap = hungOnce ? Math.min(timeoutMs, 12_000) : timeoutMs;
-    const attemptTimeout = Math.max(8_000, Math.min(cap, remaining - 2_000));
+    const attemptTimeout = Math.max(8_000, Math.min(cap, remaining - 2_000, chainLeft - 2_000));
     const r = await guardedFetch(
       `${OR_BASE}/chat/completions`,
       {
