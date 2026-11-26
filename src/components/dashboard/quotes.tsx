@@ -53,7 +53,7 @@ export default function Quotes({ data }: { data: DashboardData }) {
       {filtered.length === 0 ? (
         <Card className="rounded-xl">
           <CardContent className="flex flex-col items-center gap-2 py-12 text-center">
-            <FileText className="h-10 w-10 text-stone-300" aria-hidden="true" />
+            <FileText className="h-10 w-10 text-foreground/20" aria-hidden="true" />
             <p className="text-sm text-muted-foreground">
               {data.quotes.length ? "No template matches your search." : "No quotation templates found in the sheet yet."}
             </p>

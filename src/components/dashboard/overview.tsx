@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { toast } from "@/hooks/use-toast";
 import type { DashboardData } from "@/lib/types";
-import { CHART_COLORS, money, pct, shortDate } from "@/components/dashboard/shared";
+import { CHART_COLORS, CHART_UI, money, pct, shortDate } from "@/components/dashboard/shared";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -159,21 +159,21 @@ export default function Overview({ data }: Props) {
       value: money(Math.abs(k.awayFromTarget)),
       sub: k.awayFromTarget > 0 ? "still to go" : "target beaten!",
       icon: Flag,
-      chip: k.awayFromTarget > 0 ? "bg-amber-50 text-amber-700" : "bg-emerald-50 text-emerald-700",
+      chip: k.awayFromTarget > 0 ? "bg-amber-400/10 text-amber-300" : "bg-emerald-400/10 text-emerald-300",
     },
     {
       label: "Green (Fresh) Sales",
       value: money(k.greenSales),
       sub: "brand-new clients",
       icon: Sprout,
-      chip: "bg-emerald-50 text-emerald-700",
+      chip: "bg-emerald-400/10 text-emerald-300",
     },
     {
       label: "Repeat Orders",
       value: money(k.repeatOrders),
       sub: "yellow sales",
       icon: Repeat,
-      chip: "bg-amber-50 text-amber-700",
+      chip: "bg-amber-400/10 text-amber-300",
     },
     {
       label: "Daily Avg Sales",
@@ -191,12 +191,12 @@ export default function Overview({ data }: Props) {
 
   return (
     <div className="space-y-6">
-      {/* KPI cards — one card language: white surface, hairline edge, tonal icon, ink figures */}
+      {/* KPI cards — one card language: raised graphite surface, hairline edge, tonal icon, ink figures */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-6">
         {cards.map((c) => (
           <div
             key={c.label}
-            className="lift relative rounded-xl border bg-card p-4"
+            className="panel lift relative rounded-xl border bg-card p-4"
           >
             <div className="flex items-start justify-between gap-2">
               <p className="text-xs font-medium text-muted-foreground">{c.label}</p>
@@ -221,12 +221,12 @@ export default function Overview({ data }: Props) {
       {/* order status chips — one chip style, meaning carried by the dot colour */}
       <div className="flex flex-wrap items-center gap-2">
         {[
-          { icon: PackageCheck, text: `${k.totalOrders} orders this month`, dot: "bg-stone-500" },
-          { text: `${k.deliveredOrders} delivered`, dot: "bg-emerald-600" },
-          { text: `${k.wipOrders} in progress`, dot: "bg-amber-500" },
-          { icon: MessageSquareQuote, text: `${data.funnel.queries} queries handled`, dot: "bg-teal-700" },
-          { icon: Target, text: `${data.funnel.converted} converted (${pct(data.funnel.convRate)})`, dot: "bg-teal-700" },
-          { icon: Coins, text: `${money(data.funnel.queryRevenue + data.funnel.briefRevenue)} from queries & briefs`, dot: "bg-stone-500" },
+          { icon: PackageCheck, text: `${k.totalOrders} orders this month`, dot: "bg-slate-400" },
+          { text: `${k.deliveredOrders} delivered`, dot: "bg-emerald-400" },
+          { text: `${k.wipOrders} in progress`, dot: "bg-amber-400" },
+          { icon: MessageSquareQuote, text: `${data.funnel.queries} queries handled`, dot: "bg-teal-400" },
+          { icon: Target, text: `${data.funnel.converted} converted (${pct(data.funnel.convRate)})`, dot: "bg-teal-400" },
+          { icon: Coins, text: `${money(data.funnel.queryRevenue + data.funnel.briefRevenue)} from queries & briefs`, dot: "bg-slate-400" },
         ].map((chip) => (
           <span
             key={chip.text}
@@ -262,7 +262,7 @@ export default function Overview({ data }: Props) {
                 <p className="text-xs font-medium text-muted-foreground">{t.display}</p>
                 <p
                   className={`mt-1 text-3xl font-bold tracking-tight tabular-nums ${
-                    t.count ? "text-foreground" : "text-stone-300"
+                    t.count ? "text-foreground" : "text-foreground/20"
                   }`}
                 >
                   {t.count}
@@ -302,7 +302,7 @@ export default function Overview({ data }: Props) {
           { label: "Query-sourced sales", value: money(data.funnel.queryRevenue), sub: data.funnel.queryOrders + " orders via Conversion/Query" },
           { label: "Brief-sourced sales", value: money(data.funnel.briefRevenue), sub: data.funnel.briefOrders + " orders via Brief/Invitation" },
         ].map((c) => (
-          <div key={c.label} className="lift rounded-xl border bg-card p-3.5">
+          <div key={c.label} className="panel lift rounded-xl border bg-card p-3.5">
             <p className="text-xs font-medium text-muted-foreground">{c.label}</p>
             <p className="mt-1 text-xl font-bold tracking-tight tabular-nums text-foreground">{c.value}</p>
             <p className="text-xs text-muted-foreground">{c.sub}</p>
@@ -323,26 +323,31 @@ export default function Overview({ data }: Props) {
                 <AreaChart data={dailyData} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
                   <defs>
                     <linearGradient id="salesFill" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#0d9488" stopOpacity={0.28} />
-                      <stop offset="100%" stopColor="#0d9488" stopOpacity={0.02} />
+                      <stop offset="0%" stopColor={CHART_UI.sales} stopOpacity={0.3} />
+                      <stop offset="100%" stopColor={CHART_UI.sales} stopOpacity={0.02} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e7e5e4" />
-                  <XAxis dataKey="date" tick={{ fontSize: 11, fill: "#78716c" }} />
-                  <YAxis tick={{ fontSize: 11, fill: "#78716c" }} />
-                  <Tooltip cursor={{ stroke: "#a8a29e", strokeDasharray: "4 4" }} formatter={(v: number) => money(v)} />
+                  <CartesianGrid strokeDasharray="3 3" stroke={CHART_UI.grid} />
+                  <XAxis dataKey="date" tick={{ fontSize: 11, fill: CHART_UI.tick }} axisLine={{ stroke: CHART_UI.grid }} tickLine={false} />
+                  <YAxis tick={{ fontSize: 11, fill: CHART_UI.tick }} axisLine={false} tickLine={false} width={44} />
+                  <Tooltip
+                    cursor={{ stroke: CHART_UI.targetLine, strokeDasharray: "4 4" }}
+                    formatter={(v: number) => money(v)}
+                    contentStyle={CHART_UI.tooltip}
+                    labelStyle={{ color: CHART_UI.tickStrong }}
+                  />
                   <Legend />
                   <Area
                     type="monotone"
                     dataKey="Sales"
-                    stroke="#0d9488"
+                    stroke={CHART_UI.sales}
                     strokeWidth={2}
                     fill="url(#salesFill)"
                   />
                   <Area
                     type="monotone"
                     dataKey="Target"
-                    stroke="#a8a29e"
+                    stroke={CHART_UI.targetLine}
                     strokeWidth={2}
                     strokeDasharray="6 4"
                     fill="transparent"
@@ -351,7 +356,7 @@ export default function Overview({ data }: Props) {
               </ResponsiveContainer>
             ) : (
               <div className="flex h-full flex-col items-center justify-center gap-2 text-sm text-muted-foreground">
-                <TrendingUp className="h-6 w-6 text-stone-300" aria-hidden="true" />
+                <TrendingUp className="h-6 w-6 text-foreground/20" aria-hidden="true" />
                 No daily data in the sheet yet
               </div>
             )}
@@ -378,7 +383,7 @@ export default function Overview({ data }: Props) {
                     <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip formatter={(v: number) => money(v)} />
+                <Tooltip formatter={(v: number) => money(v)} contentStyle={CHART_UI.tooltip} labelStyle={{ color: CHART_UI.tickStrong }} />
                 <Legend wrapperStyle={{ fontSize: 12 }} />
               </PieChart>
             </ResponsiveContainer>
@@ -395,10 +400,10 @@ export default function Overview({ data }: Props) {
           <CardContent className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={sourceData} layout="vertical" margin={{ top: 0, right: 16, left: 30, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e7e5e4" />
-                <XAxis type="number" tick={{ fontSize: 11, fill: "#78716c" }} />
-                <YAxis dataKey="name" type="category" width={110} tick={{ fontSize: 11, fill: "#1c1917" }} />
-                <Tooltip cursor={{ fill: "#f5f5f4" }} formatter={(v: number) => money(v)} />
+                <CartesianGrid strokeDasharray="3 3" stroke={CHART_UI.grid} />
+                <XAxis type="number" tick={{ fontSize: 11, fill: CHART_UI.tick }} axisLine={false} tickLine={false} />
+                <YAxis dataKey="name" type="category" width={110} tick={{ fontSize: 11, fill: CHART_UI.tickStrong }} axisLine={false} tickLine={false} />
+                <Tooltip cursor={{ fill: CHART_UI.cursor }} formatter={(v: number) => money(v)} contentStyle={CHART_UI.tooltip} labelStyle={{ color: CHART_UI.tickStrong }} />
                 <Bar dataKey="value" radius={[0, 6, 6, 0]}>
                   {sourceData.map((_, i) => (
                     <Cell key={i} fill={CHART_COLORS[(i + 1) % CHART_COLORS.length]} />
@@ -409,8 +414,8 @@ export default function Overview({ data }: Props) {
           </CardContent>
         </Card>
 
-        {/* AI Insights — the product's one dark surface: AI speaks from ink, not from a gradient */}
-        <Card className="relative overflow-hidden border-stone-800 bg-stone-900 text-stone-50 lg:col-span-2">
+        {/* AI Insights — the product's one spotlight surface: AI speaks from ink, with a quiet teal glow */}
+        <Card className="spotlight relative overflow-hidden border-teal-400/20 text-foreground lg:col-span-2">
           <CardHeader className="relative">
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2.5">
@@ -418,8 +423,8 @@ export default function Overview({ data }: Props) {
                   <Bot className="h-5 w-5" aria-hidden="true" />
                 </div>
                 <div>
-                  <CardTitle className="text-base text-stone-50">AI Insights</CardTitle>
-                  <CardDescription className="text-stone-400">
+                  <CardTitle className="text-base text-foreground">AI Insights</CardTitle>
+                  <CardDescription className="text-muted-foreground">
                     Auto-generated analysis of {k.monthLabel} performance
                   </CardDescription>
                 </div>
@@ -429,7 +434,7 @@ export default function Overview({ data }: Props) {
                 variant="outline"
                 onClick={generateInsights}
                 disabled={loadingInsights}
-                className="shrink-0 border-stone-700 bg-transparent text-stone-200 hover:bg-stone-800 hover:text-stone-50"
+                className="shrink-0 border-border/70 bg-transparent text-foreground/90 hover:bg-white/[0.06] hover:text-foreground"
               >
                 <RefreshCw className={`mr-1 h-4 w-4 ${loadingInsights ? "animate-spin" : ""}`} />
                 Regenerate
@@ -443,20 +448,20 @@ export default function Overview({ data }: Props) {
                   <RefreshCw className="h-3.5 w-3.5 animate-spin" /> AI is analyzing your sales data…
                 </p>
                 {Array.from({ length: 5 }).map((_, i) => (
-                  <Skeleton key={i} className="h-4 w-full bg-stone-800" />
+                  <Skeleton key={i} className="h-4 w-full bg-white/[0.06]" />
                 ))}
               </div>
             ) : insightLines.length ? (
               <ul className="space-y-2.5">
                 {insightLines.map((line, i) => (
-                  <li key={i} className="flex gap-2.5 text-sm leading-relaxed text-stone-200">
+                  <li key={i} className="flex gap-2.5 text-sm leading-relaxed text-foreground/85">
                     <span aria-hidden="true" className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-teal-300" />
                     {line.replace(/^[-•*]\s*/, "")}
                   </li>
                 ))}
               </ul>
             ) : (
-              <p className="text-sm text-stone-400">
+              <p className="text-sm text-muted-foreground">
                 Click <span className="font-medium text-teal-300">Regenerate</span> to get a fresh AI analysis of
                 your target progress, top members and platform mix.
               </p>

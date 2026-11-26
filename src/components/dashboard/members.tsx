@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import type { DashboardData, MemberPerf } from "@/lib/types";
 import { CMS_SALES_TEAM, isCmsSalesMember, normKey } from "@/lib/cms-team";
-import { CHART_COLORS, money, pct } from "@/components/dashboard/shared";
+import { CHART_COLORS, CHART_UI, money, pct } from "@/components/dashboard/shared";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -60,7 +60,7 @@ function TeamChip({
       className={`inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 ${
         active
           ? "border-primary bg-primary text-primary-foreground shadow-none"
-          : "border-border bg-card text-muted-foreground hover:border-teal-600 hover:text-teal-700"
+          : "border-border bg-card text-muted-foreground hover:border-teal-400/40 hover:text-teal-300"
       }`}
     >
       {icon}
@@ -165,11 +165,11 @@ export default function Members({ data }: { data: DashboardData }) {
   // funnel visual: counts only (queries = full width, converted proportional)
   const totalRevenueHint = data.kpis.achievement || 1;
   const funnelSteps = [
-    { label: "Queries handled", value: funnel.queries, color: "bg-teal-700", icon: MessageSquareQuote, widthPct: 100 },
+    { label: "Queries handled", value: funnel.queries, color: "bg-teal-400", icon: MessageSquareQuote, widthPct: 100 },
     {
       label: "Converted to orders",
       value: funnel.converted,
-      color: "bg-emerald-600",
+      color: "bg-emerald-400",
       icon: Target,
       widthPct: funnel.queries ? Math.max((funnel.converted / funnel.queries) * 100, 2) : 2,
     },
@@ -185,7 +185,7 @@ export default function Members({ data }: { data: DashboardData }) {
           {withTarget} with targets
         </Badge>
         {topPerformer?.achievement > 0 && (
-          <Badge variant="outline" className="gap-1 border-amber-200 bg-amber-50 text-amber-800">
+          <Badge variant="outline" className="gap-1 border-amber-400/25 bg-amber-400/10 text-amber-300">
             <Crown className="h-3.5 w-3.5" /> Top performer: {topPerformer.name} ({money(topPerformer.achievement)})
           </Badge>
         )}
@@ -249,11 +249,11 @@ export default function Members({ data }: { data: DashboardData }) {
             {/* revenue bar — own scale */}
             <div className="flex items-center gap-3">
               <div className="flex w-44 shrink-0 items-center gap-2 text-sm font-medium text-foreground">
-                <TrendingUp className="h-4 w-4 text-amber-600" /> Revenue from queries
+                <TrendingUp className="h-4 w-4 text-amber-400" /> Revenue from queries
               </div>
               <div className="h-7 flex-1 overflow-hidden rounded-lg bg-muted">
                 <div
-                  className="h-full rounded-lg bg-amber-500 transition-[width] duration-500"
+                  className="h-full rounded-lg bg-amber-400 transition-[width] duration-500"
                   style={{ width: `${Math.max(Math.min((funnel.queryRevenue / Math.max(totalRevenueHint, 1)) * 100, 100), 2)}%` }}
                 />
               </div>
@@ -265,9 +265,9 @@ export default function Members({ data }: { data: DashboardData }) {
           <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
             {[
               { icon: MessageSquareQuote, chip: "bg-accent text-accent-foreground", label: "Queries handled", value: String(funnel.queries), sub: "tracked on the dashboard sheet" },
-              { icon: Target, chip: "bg-emerald-50 text-emerald-700", label: "Queries converted", value: String(funnel.converted), sub: `${pct(funnel.convRate)} of all queries` },
-              { icon: ClipboardList, chip: "bg-amber-50 text-amber-700", label: "Query-sourced sales", value: money(funnel.queryRevenue), sub: `${funnel.queryOrders} orders from Conversion/Query` },
-              { icon: Send, chip: "bg-stone-100 text-stone-700", label: "Brief-sourced sales", value: money(funnel.briefRevenue), sub: `${funnel.briefOrders} orders from Brief/Invitation` },
+              { icon: Target, chip: "bg-emerald-400/10 text-emerald-300", label: "Queries converted", value: String(funnel.converted), sub: `${pct(funnel.convRate)} of all queries` },
+              { icon: ClipboardList, chip: "bg-amber-400/10 text-amber-300", label: "Query-sourced sales", value: money(funnel.queryRevenue), sub: `${funnel.queryOrders} orders from Conversion/Query` },
+              { icon: Send, chip: "bg-white/[0.06] text-foreground/70", label: "Brief-sourced sales", value: money(funnel.briefRevenue), sub: `${funnel.briefOrders} orders from Brief/Invitation` },
             ].map((c) => (
               <div key={c.label} className="rounded-lg border bg-card p-3">
                 <p className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
@@ -298,7 +298,7 @@ export default function Members({ data }: { data: DashboardData }) {
           <div className="w-full overflow-x-auto rounded-md border">
             <Table className="min-w-[720px]">
               <TableHeader>
-                <TableRow className="bg-slate-50">
+                <TableRow className="bg-muted/60">
                   <TableHead>Source</TableHead>
                   <TableHead>Orders</TableHead>
                   <TableHead>Revenue</TableHead>
@@ -321,20 +321,20 @@ export default function Members({ data }: { data: DashboardData }) {
                       </span>
                     </TableCell>
                     <TableCell>{s.orders}</TableCell>
-                    <TableCell className="font-semibold text-emerald-700">{money(s.revenue)}</TableCell>
+                    <TableCell className="font-semibold text-emerald-400">{money(s.revenue)}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <div className="h-1.5 w-16 overflow-hidden rounded-full bg-muted">
                           <div
-                            className="h-full rounded-full bg-teal-700"
+                            className="h-full rounded-full bg-teal-400"
                             style={{ width: `${Math.min(s.pct, 100)}%` }}
                           />
                         </div>
-                        <span className="text-xs text-slate-500">{s.pct}%</span>
+                        <span className="text-xs text-muted-foreground">{s.pct}%</span>
                       </div>
                     </TableCell>
-                    <TableCell className="text-emerald-600">{s.delivered}</TableCell>
-                    <TableCell className="text-amber-600">{s.wip}</TableCell>
+                    <TableCell className="text-emerald-400">{s.delivered}</TableCell>
+                    <TableCell className="text-amber-400">{s.wip}</TableCell>
                     <TableCell>{money(s.avg)}</TableCell>
                   </TableRow>
                 ))}
@@ -355,15 +355,15 @@ export default function Members({ data }: { data: DashboardData }) {
         <CardContent className="h-[380px]">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={chartData} layout="vertical" margin={{ top: 0, right: 24, left: 10, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e7e5e4" />
-              <XAxis type="number" tick={{ fontSize: 11, fill: "#78716c" }} />
-              <YAxis dataKey="name" type="category" width={130} tick={{ fontSize: 11, fill: "#1c1917" }} />
-              <Tooltip cursor={{ fill: "#f5f5f4" }} formatter={(v: number) => money(v)} />
+              <CartesianGrid strokeDasharray="3 3" stroke={CHART_UI.grid} />
+              <XAxis type="number" tick={{ fontSize: 11, fill: CHART_UI.tick }} axisLine={false} tickLine={false} />
+              <YAxis dataKey="name" type="category" width={130} tick={{ fontSize: 11, fill: CHART_UI.tickStrong }} axisLine={false} tickLine={false} />
+              <Tooltip cursor={{ fill: CHART_UI.cursor }} formatter={(v: number) => money(v)} contentStyle={CHART_UI.tooltip} labelStyle={{ color: CHART_UI.tickStrong }} />
               <Legend />
-              <Bar dataKey="Target" fill="#d6d3d1" radius={[0, 4, 4, 0]} barSize={9} />
-              <Bar dataKey="Achievement" fill="#0d9488" radius={[0, 4, 4, 0]} barSize={9}>
+              <Bar dataKey="Target" fill={CHART_UI.targetBar} radius={[0, 4, 4, 0]} barSize={9} />
+              <Bar dataKey="Achievement" fill={CHART_UI.sales} radius={[0, 4, 4, 0]} barSize={9}>
                 {chartData.map((_, i) => (
-                  <Cell key={i} fill="#0d9488" />
+                  <Cell key={i} fill={CHART_UI.sales} />
                 ))}
               </Bar>
             </BarChart>
@@ -384,7 +384,7 @@ export default function Members({ data }: { data: DashboardData }) {
           {/* native overflow container with sticky header — reliable clipping */}
           <div className="max-h-[560px] w-full overflow-auto rounded-md border">
             <Table className="min-w-[980px]">
-              <TableHeader className="sticky top-0 z-10 bg-white shadow-sm">
+              <TableHeader className="sticky top-0 z-10 bg-card shadow-sm">
                 <TableRow>
                   {head.map((h) => (
                     <TableHead
@@ -417,32 +417,32 @@ export default function Members({ data }: { data: DashboardData }) {
                         <span className="inline-flex items-center gap-1.5">
                           {m.name}
                           {m.name === topPerformer?.name && topPerformer.achievement > 0 && (
-                            <Award className="h-4 w-4 text-amber-500" aria-hidden="true" />
+                            <Award className="h-4 w-4 text-amber-400" aria-hidden="true" />
                           )}
                           {m.placeholder && (
-                            <span className="rounded-full border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-[10px] font-normal text-slate-400">
+                            <span className="rounded-full border border-white/10 bg-white/[0.04] px-1.5 py-0.5 text-[10px] font-normal text-muted-foreground">
                               no sheet data yet
                             </span>
                           )}
                         </span>
                       </TableCell>
                       <TableCell className="tabular-nums">{m.hasTarget ? money(m.target) : "—"}</TableCell>
-                      <TableCell className="font-semibold tabular-nums text-emerald-700">{money(m.achievement)}</TableCell>
-                      <TableCell className="tabular-nums text-lime-700">{money(m.green)}</TableCell>
-                      <TableCell className="tabular-nums text-amber-700">{money(m.yellow)}</TableCell>
+                      <TableCell className="font-semibold tabular-nums text-emerald-400">{money(m.achievement)}</TableCell>
+                      <TableCell className="tabular-nums text-lime-400">{money(m.green)}</TableCell>
+                      <TableCell className="tabular-nums text-amber-400">{money(m.yellow)}</TableCell>
                       <TableCell className="min-w-[140px]">
                         {m.hasTarget ? (
                           <div className="flex items-center gap-2">
                             <Progress value={pctVal} className="h-2 w-24" />
-                            <span className="text-xs text-slate-500">{pctVal}%</span>
+                            <span className="text-xs text-muted-foreground">{pctVal}%</span>
                           </div>
                         ) : (
-                          <span className="text-xs text-slate-400">no target</span>
+                          <span className="text-xs text-muted-foreground/70">no target</span>
                         )}
                       </TableCell>
                       <TableCell>
                         {m.hasTarget ? (
-                          <span className={over ? "font-medium text-emerald-600" : "text-rose-600"}>
+                          <span className={over ? "font-medium text-emerald-400" : "text-rose-400"}>
                             {over ? "+" : "−"}
                             {money(Math.abs(m.gap)).slice(1)}
                           </span>
@@ -452,7 +452,7 @@ export default function Members({ data }: { data: DashboardData }) {
                       </TableCell>
                       <TableCell className="tabular-nums">{m.orders}</TableCell>
                       <TableCell className="tabular-nums">{m.queries || "—"}</TableCell>
-                      <TableCell className="font-medium tabular-nums text-amber-700">
+                      <TableCell className="font-medium tabular-nums text-amber-400">
                         {m.queryRevenue ? money(m.queryRevenue) : "—"}
                       </TableCell>
                       <TableCell>
@@ -461,10 +461,10 @@ export default function Members({ data }: { data: DashboardData }) {
                             variant="outline"
                             className={
                               m.convRatio >= 0.3
-                                ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                                ? "border-emerald-400/25 bg-emerald-400/10 text-emerald-300"
                                 : m.convRatio > 0
-                                  ? "border-amber-200 bg-amber-50 text-amber-700"
-                                  : "border-slate-200 bg-slate-50 text-slate-500"
+                                  ? "border-amber-400/25 bg-amber-400/10 text-amber-300"
+                                  : "border-white/10 bg-white/[0.04] text-muted-foreground"
                             }
                           >
                             {pct(m.convRatio)}

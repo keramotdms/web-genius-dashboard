@@ -1,18 +1,38 @@
-/* Data colours — one muted categorical palette, teal leads.
-   No violet/purple/pink: the page design never wears them (taste rule),
-   and data stays in the same quiet family. */
+/* Data colours — one muted categorical palette tuned for the dark canvas,
+   teal leads. No violet/purple/pink: the page design never wears them
+   (taste rule), and data stays in the same quiet family. */
 export const CHART_COLORS = [
-  "#0f766e", // teal-700 — lead
-  "#d97706", // amber-600
-  "#64748b", // slate-500
-  "#0891b2", // cyan-600
-  "#059669", // emerald-600
-  "#b45309", // amber-700
-  "#475569", // slate-600
-  "#0d9488", // teal-600
-  "#ea580c", // orange-600
-  "#155e75", // cyan-800
+  "#2dd4bf", // teal-400 — lead
+  "#fbbf24", // amber-400
+  "#94a3b8", // slate-400
+  "#22d3ee", // cyan-400
+  "#34d399", // emerald-400
+  "#fcd34d", // amber-300
+  "#cbd5e1", // slate-300
+  "#5eead4", // teal-300
+  "#fb923c", // orange-400
+  "#67e8f9", // cyan-300
 ];
+
+/* Shared chart chrome for the graphite theme — grid, ticks, tooltip panel.
+   Every chart reads these so all axes and tooltips stay one system. */
+export const CHART_UI = {
+  grid: "#1f2836",
+  tick: "#8b96a5",
+  tickStrong: "#eef2f7",
+  cursor: "#1a2230",
+  sales: "#2dd4bf",
+  targetLine: "#64748b",
+  targetBar: "#3b4757",
+  tooltip: {
+    backgroundColor: "#0d121b",
+    border: "1px solid #1f2836",
+    borderRadius: "10px",
+    color: "#eef2f7",
+    fontSize: "12px",
+    boxShadow: "0 8px 24px -8px rgb(0 0 0 / 0.6)",
+  },
+} as const;
 
 export function money(n: number, digits = 0): string {
   return new Intl.NumberFormat("en-US", {
@@ -47,56 +67,56 @@ export function timeAgo(iso: string): string {
   return `${Math.floor(hours / 24)}d ago`;
 }
 
-/* Platform badges — distinct but muted tones (bg-50 / text-800 / border-200),
-   flat tints, no gradients. */
+/* Platform badges — dark tonal tints (bg 500/10 · text 300 · border 500/20),
+   flat, no gradients, one formula for every hue. */
 const PLATFORM_STYLES: Record<string, string> = {
-  Shopify: "bg-emerald-50 text-emerald-800 border-emerald-200",
-  WordPress: "bg-cyan-50 text-cyan-800 border-cyan-200",
-  Wix: "bg-orange-50 text-orange-800 border-orange-200",
-  Squarespace: "bg-amber-50 text-amber-900 border-amber-200",
-  Webflow: "bg-stone-100 text-stone-700 border-stone-200",
-  Other: "bg-stone-100 text-stone-700 border-stone-200",
+  Shopify: "bg-emerald-400/10 text-emerald-300 border-emerald-400/25",
+  WordPress: "bg-cyan-400/10 text-cyan-300 border-cyan-400/25",
+  Wix: "bg-orange-400/10 text-orange-300 border-orange-400/25",
+  Squarespace: "bg-amber-400/10 text-amber-300 border-amber-400/25",
+  Webflow: "bg-white/[0.06] text-foreground/70 border-white/10",
+  Other: "bg-white/[0.06] text-foreground/70 border-white/10",
 };
 
 export function platformClass(p: string): string {
   return PLATFORM_STYLES[p] ?? PLATFORM_STYLES.Other;
 }
 
-/** Badge colors for the 20 website categories — one muted rotating palette. */
+/** Badge colors for the 20 website categories — one dark tonal rotating palette. */
 export function websiteCategoryClass(t: string): string {
   const map: Record<string, string> = {
-    "E-commerce Based (Product Selling) Website": "bg-emerald-50 text-emerald-800 border-emerald-200",
-    "Dropshipping / Affiliate Marketing Website": "bg-teal-50 text-teal-800 border-teal-200",
-    "Professional Service-Based Website": "bg-cyan-50 text-cyan-800 border-cyan-200",
-    "Agency (Agency Business-Based) Website": "bg-orange-50 text-orange-800 border-orange-200",
-    "Corporate / Company Profile Website": "bg-stone-100 text-stone-700 border-stone-200",
-    "Portfolio (Personal / Creative) Website": "bg-amber-50 text-amber-900 border-amber-200",
-    "News Portal Website": "bg-rose-50 text-rose-800 border-rose-200",
-    "Blog / Magazine Website": "bg-yellow-50 text-yellow-800 border-yellow-200",
-    "LMS (Learning Management System) Website": "bg-lime-50 text-lime-800 border-lime-200",
-    "Landing Page Website": "bg-teal-50 text-teal-800 border-teal-200",
-    "Sales Funnel Website": "bg-amber-50 text-amber-900 border-amber-200",
-    "SaaS (Software as a Service) Website": "bg-emerald-50 text-emerald-800 border-emerald-200",
-    "Membership / Subscription Website": "bg-orange-50 text-orange-800 border-orange-200",
-    "Booking / Appointment Website": "bg-green-50 text-green-800 border-green-200",
-    "Real Estate / Property Listing Website": "bg-cyan-50 text-cyan-800 border-cyan-200",
-    "Directory / Listing Website": "bg-stone-100 text-stone-700 border-stone-200",
-    "Job Portal Website": "bg-yellow-50 text-yellow-800 border-yellow-200",
-    "Event / Conference Website": "bg-rose-50 text-rose-800 border-rose-200",
-    "Forum / Community Website": "bg-sky-50 text-sky-800 border-sky-200",
-    "Non-Profit / NGO / Charity Website": "bg-lime-50 text-lime-800 border-lime-200",
+    "E-commerce Based (Product Selling) Website": "bg-emerald-400/10 text-emerald-300 border-emerald-400/25",
+    "Dropshipping / Affiliate Marketing Website": "bg-teal-400/10 text-teal-300 border-teal-400/25",
+    "Professional Service-Based Website": "bg-cyan-400/10 text-cyan-300 border-cyan-400/25",
+    "Agency (Agency Business-Based) Website": "bg-orange-400/10 text-orange-300 border-orange-400/25",
+    "Corporate / Company Profile Website": "bg-white/[0.06] text-foreground/70 border-white/10",
+    "Portfolio (Personal / Creative) Website": "bg-amber-400/10 text-amber-300 border-amber-400/25",
+    "News Portal Website": "bg-rose-400/10 text-rose-300 border-rose-400/25",
+    "Blog / Magazine Website": "bg-yellow-400/10 text-yellow-300 border-yellow-400/25",
+    "LMS (Learning Management System) Website": "bg-lime-400/10 text-lime-300 border-lime-400/25",
+    "Landing Page Website": "bg-teal-400/10 text-teal-300 border-teal-400/25",
+    "Sales Funnel Website": "bg-amber-400/10 text-amber-300 border-amber-400/25",
+    "SaaS (Software as a Service) Website": "bg-emerald-400/10 text-emerald-300 border-emerald-400/25",
+    "Membership / Subscription Website": "bg-orange-400/10 text-orange-300 border-orange-400/25",
+    "Booking / Appointment Website": "bg-green-400/10 text-green-300 border-green-400/25",
+    "Real Estate / Property Listing Website": "bg-cyan-400/10 text-cyan-300 border-cyan-400/25",
+    "Directory / Listing Website": "bg-white/[0.06] text-foreground/70 border-white/10",
+    "Job Portal Website": "bg-yellow-400/10 text-yellow-300 border-yellow-400/25",
+    "Event / Conference Website": "bg-rose-400/10 text-rose-300 border-rose-400/25",
+    "Forum / Community Website": "bg-sky-400/10 text-sky-300 border-sky-400/25",
+    "Non-Profit / NGO / Charity Website": "bg-lime-400/10 text-lime-300 border-lime-400/25",
   };
-  return map[t] ?? "bg-stone-100 text-stone-500 border-stone-200 italic";
+  return map[t] ?? "bg-white/[0.06] text-muted-foreground border-white/10 italic";
 }
 
-/** Badge colors for the big-client hunting labels — flat tints, no gradients. */
+/** Badge colors for the big-client hunting labels — flat dark tints, no gradients. */
 export function siteLabelClass(label: string): string {
   const map: Record<string, string> = {
-    "Premium Website": "bg-amber-50 text-amber-800 border-amber-300",
-    "Large Website": "bg-cyan-50 text-cyan-800 border-cyan-300",
-    "High Value Project's Website": "bg-rose-50 text-rose-800 border-rose-300",
+    "Premium Website": "bg-amber-400/10 text-amber-300 border-amber-400/30",
+    "Large Website": "bg-cyan-400/10 text-cyan-300 border-cyan-400/30",
+    "High Value Project's Website": "bg-rose-400/10 text-rose-300 border-rose-400/30",
   };
-  return map[label] ?? "bg-stone-100 text-stone-700 border-stone-200";
+  return map[label] ?? "bg-white/[0.06] text-foreground/70 border-white/10";
 }
 
 export function pct(n: number): string {

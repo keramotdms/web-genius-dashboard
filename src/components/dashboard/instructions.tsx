@@ -53,7 +53,7 @@ export default function Instructions({ data }: { data: DashboardData }) {
                   <AccordionTrigger className="text-sm font-semibold">
                     <span className="flex items-center gap-2">
                       {sec.section}
-                      <Badge variant="outline" className="text-[10px] text-slate-500">
+                      <Badge variant="outline" className="text-[10px] text-muted-foreground">
                         {sec.items.length}
                       </Badge>
                     </span>
@@ -66,14 +66,14 @@ export default function Instructions({ data }: { data: DashboardData }) {
                           href={item.link}
                           target="_blank"
                           rel="noreferrer"
-                          className="group flex items-start gap-2 rounded-lg border bg-card p-2.5 transition-colors hover:border-teal-500 hover:bg-accent/60"
+                          className="group flex items-start gap-2 rounded-lg border bg-card p-2.5 transition-colors hover:border-teal-400/50 hover:bg-teal-400/[0.06]"
                         >
-                          <ExternalLink className="mt-0.5 h-4 w-4 shrink-0 text-stone-300 group-hover:text-teal-700" />
+                          <ExternalLink className="mt-0.5 h-4 w-4 shrink-0 text-foreground/25 group-hover:text-teal-300" />
                           <div className="min-w-0">
-                            <p className="text-sm font-medium leading-snug text-foreground group-hover:text-teal-800">
+                            <p className="text-sm font-medium leading-snug text-foreground group-hover:text-teal-300">
                               {item.title}
                             </p>
-                            {item.note && <p className="mt-0.5 text-xs italic text-amber-700">{item.note}</p>}
+                            {item.note && <p className="mt-0.5 text-xs italic text-amber-300/90">{item.note}</p>}
                           </div>
                         </a>
                       ))}
@@ -197,7 +197,7 @@ function MessagesBoard() {
                 <div key={m.id} className="flex gap-2.5 rounded-xl border bg-card p-3">
                   <div
                     aria-hidden="true"
-                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-stone-800 text-xs font-bold text-stone-50"
+                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/15 text-xs font-bold text-primary ring-1 ring-primary/20"
                   >
                     {m.author.slice(0, 2).toUpperCase()}
                   </div>
@@ -217,7 +217,7 @@ function MessagesBoard() {
           </div>
         ) : (
           <div className="flex flex-1 flex-col items-center justify-center gap-2 rounded-md border border-dashed py-10 text-center">
-            <StickyNote className="h-8 w-8 text-stone-300" aria-hidden="true" />
+            <StickyNote className="h-8 w-8 text-foreground/20" aria-hidden="true" />
             <p className="text-sm text-muted-foreground">No messages yet — be the first to post one!</p>
           </div>
         )}

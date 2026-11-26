@@ -35,9 +35,9 @@ export const metadata: Metadata = {
   },
 };
 
-/** Matches the light canvas so mobile browser chrome blends with the page. */
+/** Matches the dark graphite canvas so mobile browser chrome blends with the page. */
 export const viewport: Viewport = {
-  themeColor: "#fafaf9",
+  themeColor: "#0a0e14",
 };
 
 export default function RootLayout({
@@ -46,7 +46,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" className="dark" suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground`}
       >

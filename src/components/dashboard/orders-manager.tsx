@@ -86,10 +86,10 @@ function orderToForm(o: SalesOrder): FormState {
 
 function statusClass(s: string): string {
   const t = s.toLowerCase();
-  if (t === "delivered") return "bg-emerald-100 text-emerald-800 border-emerald-200";
-  if (t === "wip") return "bg-amber-100 text-amber-800 border-amber-200";
-  if (t === "cancelled") return "bg-rose-100 text-rose-800 border-rose-200";
-  return "bg-slate-100 text-foreground/80 border-slate-200";
+  if (t === "delivered") return "bg-emerald-400/10 text-emerald-300 border-emerald-400/25";
+  if (t === "wip") return "bg-amber-400/10 text-amber-300 border-amber-400/25";
+  if (t === "cancelled") return "bg-rose-400/10 text-rose-300 border-rose-400/25";
+  return "bg-white/[0.06] text-foreground/80 border-white/10";
 }
 
 export default function OrdersManager({
@@ -286,9 +286,9 @@ export default function OrdersManager({
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {[
           { label: "Orders", value: String(filtered.length), cls: "text-foreground" },
-          { label: "Revenue", value: money(Math.round(revenue * 10) / 10), cls: "text-emerald-700" },
-          { label: "Delivered", value: String(delivered), cls: "text-teal-700" },
-          { label: "WIP", value: String(wip), cls: "text-amber-700" },
+          { label: "Revenue", value: money(Math.round(revenue * 10) / 10), cls: "text-emerald-400" },
+          { label: "Delivered", value: String(delivered), cls: "text-teal-400" },
+          { label: "WIP", value: String(wip), cls: "text-amber-400" },
         ].map((s) => (
           <div key={s.label} className="rounded-xl border bg-card p-4">
             <p className="text-xs text-muted-foreground">{s.label}</p>
@@ -316,7 +316,7 @@ export default function OrdersManager({
             <tbody>
               {shown.map((o, i) => (
                 /* sheet rows can repeat an id — index suffix keeps React keys unique */
-                <tr key={`${o.id}-${i}`} className="border-t border-border transition-colors hover:bg-accent/50">
+                <tr key={`${o.id}-${i}`} className="border-t border-border transition-colors hover:bg-white/[0.03]">
                   <td className="whitespace-nowrap px-3 py-2.5 tabular-nums text-muted-foreground">{shortDate(o.date)}</td>
                   <td className="px-3 py-2.5">
                     <p className="font-medium text-foreground">{o.orderNo || "—"}</p>
@@ -347,7 +347,7 @@ export default function OrdersManager({
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-8 w-8 text-rose-500 hover:text-rose-600"
+                      className="h-8 w-8 text-rose-400 hover:text-rose-300 hover:bg-rose-400/10"
                       onClick={() => setDeleting(o)}
                       aria-label={`Delete order ${o.orderNo || o.clientId || ""}`}
                       title="Delete"
@@ -395,7 +395,7 @@ export default function OrdersManager({
               <Button
                 variant="outline"
                 size="sm"
-                className="text-rose-600 hover:bg-rose-50"
+                className="text-rose-400 hover:bg-rose-400/10 hover:text-rose-300"
                 onClick={() => setDeleting(o)}
               >
                 <Trash2 className="mr-1 h-3.5 w-3.5" /> Delete
@@ -415,7 +415,7 @@ export default function OrdersManager({
 
       {filtered.length === 0 && (
         <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed bg-card py-12 text-center">
-          <ShoppingCart className="h-10 w-10 text-stone-300" aria-hidden="true" />
+          <ShoppingCart className="h-10 w-10 text-foreground/20" aria-hidden="true" />
           <p className="text-sm text-muted-foreground">
             {data.orders.length ? "No order matches your search." : "No orders yet — add your first order or sync from the sheet."}
           </p>
@@ -669,7 +669,7 @@ function OrderFormDialog(props: {
         </div>
 
         {props.error && (
-          <p role="alert" className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-600">{props.error}</p>
+          <p role="alert" className="rounded-lg border border-rose-400/25 bg-rose-400/10 px-3 py-2 text-sm text-rose-300">{props.error}</p>
         )}
 
         <DialogFooter className="gap-2">

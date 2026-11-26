@@ -127,11 +127,11 @@ export default function Home() {
       >
         Skip to content
       </a>
-      {/* Header — flat white surface on a hairline, ink text, one accent */}
+      {/* Header — raised graphite surface on a hairline, ink text, one accent */}
       <header className="sticky top-0 z-40 border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/85">
         <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-4 md:flex-row md:items-center md:justify-between md:py-3.5">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-[inset_0_1px_0_rgba(255,255,255,0.25)]">
               <Sparkles className="h-5 w-5" aria-hidden="true" />
             </div>
             <div className="min-w-0">
@@ -178,8 +178,8 @@ export default function Home() {
               title={source}
             >
               <span aria-hidden="true" className="relative flex h-2 w-2">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-60" />
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-600" />
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
               </span>
               {syncTime ? `Synced ${syncTime}` : "Syncing…"}
             </Badge>
@@ -231,7 +231,7 @@ export default function Home() {
                     key={t.v}
                     value={t.v}
                     aria-label={t.label}
-                    className="gap-2 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-none"
+                    className="gap-2 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-white/[0.04] hover:text-foreground data-[state=active]:bg-primary/15 data-[state=active]:text-primary data-[state=active]:shadow-none"
                   >
                     <t.icon className="h-4 w-4" />
                     <span className="hidden sm:inline">{t.label}</span>
